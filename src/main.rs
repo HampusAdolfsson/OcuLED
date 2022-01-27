@@ -1,3 +1,5 @@
+extern crate fontdue;
+
 mod rendering;
 mod output;
 
@@ -11,11 +13,11 @@ mod config {
 
 fn main() -> std::io::Result<()> {
     let mut canvas = rendering::Canvas::new(config::SCREEN_WIDTH, config::SCREEN_HEIGHT);
-    for x in 0..config::SCREEN_WIDTH / 2 {
-        for y in 0..config::SCREEN_HEIGHT / 2 {
-            canvas.buffer[128*y + x] = 0xff;
-        }
-    }
+
+    // Read the font data.
+    let font = include_bytes!("../resources/Roboto-Regular.ttf") as &[u8];
+    canvas.set_font(font);
+    canvas.draw_text(0, 50, "ciog", 31.0);
 
     let output = output::UdpOutput{ address: config::ADDRESS };
     output.render_canvas(canvas.into())?;
