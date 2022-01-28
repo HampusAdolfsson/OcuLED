@@ -23,16 +23,19 @@ impl Canvas {
         self.font = font;
     }
 
-    pub fn draw_text(&mut self, mut x: i32, baseline: i32, text: &str, font_size: f32) {
+    pub fn draw_text(&mut self, x: i32, baseline: i32, text: &str, font_size: f32) {
         assert_ne!(self.font.len(), 0);
 
         let font = fontdue::Font::from_bytes(self.font, fontdue::FontSettings::default()).unwrap();
 
+        let mut float_x = x as f32;
+
         for character in text.chars() {
             let (metrics, bitmap) = font.rasterize(character, font_size);
-            self.draw_bitmap(x, baseline - metrics.height as i32 - metrics.ymin, metrics.width, metrics.height, &bitmap);
+            let padding = metrics.advance_width - metrics.width as f32;
+            self.draw_bitmap((float_x + padding / 2.0) as i32, baseline - metrics.height as i32 - metrics.ymin, metrics.width, metrics.height, &bitmap);
 
-            x += metrics.width as i32;
+            float_x += metrics.advance_width;
         }
     }
 
