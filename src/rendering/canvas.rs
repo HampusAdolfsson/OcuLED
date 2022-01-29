@@ -1,9 +1,10 @@
+use super::bitmap::Bitmap;
 
 /**
  * A bitmap, but we can also draw text to it
  */
 pub struct Canvas {
-    pub bitmap: super::bitmap::Bitmap,
+    pub bitmap: Bitmap,
     pub font: &'static [u8],
 }
 
@@ -34,14 +35,16 @@ pub enum HorizontalAlignment {
 pub enum VerticalAlignment {
     /** The y coordinate is where the baseline should be drawn */
     Baseline,
-    /** The y coordinate is the middle point between the baseline and the top of the drawn text */
+    /** The y coordinate is the middle point between the baseline and the topmost pixel */
     CenterBase,
+    /** The y coordinate is the middle point between the baseline and the topmost pixel */
+    Top,
 }
 
 impl Canvas {
     pub fn new(width: usize, height: usize) -> Self {
         return Canvas{
-            bitmap: super::bitmap::Bitmap::new(width, height),
+            bitmap: Bitmap::new(width, height),
             font: &[],
         }
     }
@@ -71,13 +74,16 @@ impl Canvas {
         let baseline = match ver_alignment {
             VerticalAlignment::Baseline => y,
             VerticalAlignment::CenterBase => y + text_metrics.base_height as i32 / 2,
+            VerticalAlignment::Top => y + text_metrics.base_height as i32,
         };
 
         for character in text.chars() {
-            let (metrics, bitmap) = font.rasterize(character, font_size);
+            let (metrics, buffer) = font.rasterize(character, font_size);
+
             let padding = metrics.advance_width - metrics.width as f32;
             let top = baseline - metrics.height as i32 - metrics.ymin;
-            self.bitmap.draw_bitmap((next_x + padding / 2.0) as i32, top, metrics.width, metrics.height, &bitmap);
+            let char_bmp = Bitmap{ width: metrics.width, height: metrics.height, buffer: buffer};
+            self.bitmap.draw_bitmap((next_x + padding / 2.0) as i32, top, &char_bmp);
 
             next_x += metrics.advance_width;
         }

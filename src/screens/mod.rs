@@ -1,9 +1,7 @@
+pub mod drawable_component;
 use chrono::Local;
-use super::rendering;
-
-pub trait DrawableComponent {
-    fn draw_to(&self, canvas: &mut rendering::Canvas);
-}
+use drawable_component::DrawableComponent;
+use crate::rendering;
 
 pub struct ClockScreen;
 
@@ -15,8 +13,20 @@ impl DrawableComponent for ClockScreen {
             canvas.bitmap.width as i32 / 2,
             canvas.bitmap.height as i32 / 2,
             &clock_text,
-            32.0,
+            36.0,
             rendering::HorizontalAlignment::Center,
             rendering::VerticalAlignment::CenterBase);
+    }
+}
+
+pub struct BitmapScreen {
+    pub bitmap: rendering::Bitmap,
+    pub x: i32,
+    pub y: i32,
+}
+
+impl DrawableComponent for BitmapScreen {
+    fn draw_to(&self, canvas: &mut rendering::Canvas) {
+        canvas.bitmap.draw_bitmap(self.x, self.y, &self.bitmap);
     }
 }

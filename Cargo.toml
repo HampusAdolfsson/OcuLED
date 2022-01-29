@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 fontdue = "0.6.2"
 chrono = "0.4"
+image = "0.23"
+hotkey = "0.3"
