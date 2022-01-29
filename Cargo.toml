@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 fontdue = "0.6.2"
+chrono = "0.4"
