@@ -18,13 +18,17 @@ mod config {
 
 fn main() -> std::io::Result<()> {
     let clock = screens::ClockScreen{};
-    let bongo_cat = rendering::Bitmap::from_png(include_bytes!("../resources/images/bongo_cat.png") as &[u8]);
     let bmp = screens::BitmapScreen{
-        bitmap: bongo_cat,
+        bitmap: rendering::Bitmap::from_png(include_bytes!("../resources/images/bongo_cat.png")),
         x: 0,
         y: 0,
     };
-    let mut screens = screen_collection::ScreenCollection::new(vec![&clock, &bmp]);
+    let media = screens::media::MediaControls::new();
+
+    let mut canvas = rendering::Canvas::new(config::DISPLAY_WIDTH, config::SCREEN_HEIGHT);
+    let font = include_bytes!("../resources/fonts/Roboto-Bold.ttf") as &[u8];
+    canvas.set_font(font);
+    let mut screens = screen_collection::ScreenCollection::new(vec![&clock, &bmp, &media], canvas);
 
     let (tx, rx) = mpsc::channel::<UserInput>();
 
@@ -45,15 +49,11 @@ fn main() -> std::io::Result<()> {
         hk.listen();
     });
 
-    let mut canvas = rendering::Canvas::new(config::DISPLAY_WIDTH, config::SCREEN_HEIGHT);
-    let font = include_bytes!("../resources/fonts/Roboto-Bold.ttf") as &[u8];
-    canvas.set_font(font);
     let output = output::UdpOutput{ address: config::ADDRESS };
 
     loop {
-        canvas.clear();
-        screens.draw_to(&mut canvas);
-        output.render_bitmap((&canvas.bitmap).into())?;
+        screens.draw();
+        output.render_bitmap((&screens.canvas.bitmap).into())?;
         let event = rx.recv_timeout(std::time::Duration::from_millis(1000));
         match event {
             Ok(UserInput::NextScreen) => screens.next(),

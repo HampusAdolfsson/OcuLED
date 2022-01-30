@@ -37,8 +37,10 @@ pub enum VerticalAlignment {
     Baseline,
     /** The y coordinate is the middle point between the baseline and the topmost pixel */
     CenterBase,
-    /** The y coordinate is the middle point between the baseline and the topmost pixel */
+    /** The y coordinate is where the topmost pixel should be drawn */
     Top,
+    /** The y coordinate is where the bottommost pixel should be drawn */
+    Bottom,
 }
 
 impl Canvas {
@@ -75,6 +77,7 @@ impl Canvas {
             VerticalAlignment::Baseline => y,
             VerticalAlignment::CenterBase => y + text_metrics.base_height as i32 / 2,
             VerticalAlignment::Top => y + text_metrics.base_height as i32,
+            VerticalAlignment::Bottom => y - (text_metrics.height as i32 - text_metrics.base_height as i32),
         };
 
         for character in text.chars() {
