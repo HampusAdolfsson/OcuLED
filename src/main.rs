@@ -2,34 +2,19 @@ extern crate fontdue;
 
 mod output;
 mod rendering;
-mod screen_collection;
+mod display_controller;
 mod screens;
 
-use output::RenderTarget;
-use screens::drawable_component::DrawableComponent;
 use std::sync::mpsc;
 
 
 mod config {
     pub const ADDRESS: &str = "192.168.1.11:4435";
     pub const DISPLAY_WIDTH: usize = 128;
-    pub const SCREEN_HEIGHT: usize = 64;
+    pub const DISPLAY_HEIGHT: usize = 64;
 }
 
 fn main() -> std::io::Result<()> {
-    let clock = screens::ClockScreen{};
-    let bmp = screens::BitmapScreen{
-        bitmap: rendering::Bitmap::from_png(include_bytes!("../resources/images/bongo_cat.png")),
-        x: 0,
-        y: 0,
-    };
-    let media = screens::media::MediaControls::new();
-
-    let mut canvas = rendering::Canvas::new(config::DISPLAY_WIDTH, config::SCREEN_HEIGHT);
-    let font = include_bytes!("../resources/fonts/Roboto-Bold.ttf") as &[u8];
-    canvas.set_font(font);
-    let mut screens = screen_collection::ScreenCollection::new(vec![&clock, &bmp, &media], canvas);
-
     let (tx, rx) = mpsc::channel::<UserInput>();
 
     std::thread::spawn(move || {
@@ -49,15 +34,24 @@ fn main() -> std::io::Result<()> {
         hk.listen();
     });
 
+    let clock = screens::ClockScreen{};
+    let bmp = screens::BitmapScreen{
+        bitmap: rendering::Bitmap::from_png(include_bytes!("../resources/images/bongo_cat.png")),
+        x: 0,
+        y: 0,
+    };
+    let media = screens::media::MediaControls::new();
+
+    let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&clock, &bmp, &media]);
     let output = output::UdpOutput{ address: config::ADDRESS };
 
     loop {
-        screens.draw();
-        output.render_bitmap((&screens.canvas.bitmap).into())?;
+        display_controller.draw_to(&output)?;
+
         let event = rx.recv_timeout(std::time::Duration::from_millis(1000));
         match event {
-            Ok(UserInput::NextScreen) => screens.next(),
-            Ok(UserInput::PrevScreen) => screens.previous(),
+            Ok(UserInput::NextScreen) => display_controller.next_screen(),
+            Ok(UserInput::PrevScreen) => display_controller.previous_screen(),
             Err(_) => (),
         }
     }

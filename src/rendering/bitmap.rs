@@ -57,4 +57,17 @@ impl Bitmap {
             }
         }
     }
+
+    pub fn draw_rect(&mut self, x: i32, y: i32, width: usize, height: usize) {
+        let y_start = std::cmp::max(y, 0) as usize;
+        let y_end = std::cmp::min((y + height as i32) as usize, self.height);
+        let x_start = std::cmp::max(x, 0) as usize;
+        let x_end = std::cmp::min((x + width as i32) as usize, self.width);
+
+        for y_draw in y_start..y_end {
+            for x_draw in x_start..x_end {
+                self.buffer[y_draw * self.width + x_draw] = 0xff;
+            }
+        }
+    }
 }

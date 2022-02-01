@@ -5,7 +5,7 @@ use std::net;
  * Something we can output canvases to. Typically this would be a microcontroller connected via USB or wifi.
  */
 pub trait RenderTarget {
-    fn render_bitmap(&self, canvas: rendering::BinaryBitmap) -> std::io::Result<()>;
+    fn render_bitmap(&self, bitmap: rendering::BinaryBitmap) -> std::io::Result<()>;
 }
 
 pub struct UdpOutput<'a> {
