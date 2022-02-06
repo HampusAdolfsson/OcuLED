@@ -3,6 +3,7 @@ use super::bitmap::Bitmap;
 /**
  * A bitmap, but we can also draw text to it
  */
+#[derive(Clone)]
 pub struct Canvas {
     pub bitmap: Bitmap,
     pub font: &'static [u8],

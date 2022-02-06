@@ -4,6 +4,7 @@ mod output;
 mod rendering;
 mod display_controller;
 mod screens;
+mod performance_monitor;
 
 use std::sync::mpsc;
 
@@ -34,21 +35,25 @@ fn main() -> std::io::Result<()> {
         hk.listen();
     });
 
-    let clock = screens::ClockScreen{};
-    let bmp = screens::BitmapScreen{
+    let mut clock = screens::ClockScreen{};
+    let mut bmp = screens::BitmapScreen{
         bitmap: rendering::Bitmap::from_png(include_bytes!("../resources/images/bongo_cat.png")),
         x: 0,
         y: 0,
     };
-    let media = screens::media::MediaControls::new();
+    let mut media = screens::media::MediaControls::new();
 
-    let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&clock, &bmp, &media]);
+    let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&mut clock, &mut bmp, &mut media]);
     let output = output::UdpOutput{ address: config::ADDRESS };
 
+    let mut last_time = std::time::Instant::now();
     loop {
+        let elapsed = last_time.elapsed();
+        last_time = std::time::Instant::now();
+        display_controller.tick(elapsed);
         display_controller.draw_to(&output)?;
 
-        let event = rx.recv_timeout(std::time::Duration::from_millis(1000));
+        let event = rx.recv_timeout(std::time::Duration::from_millis(25));
         match event {
             Ok(UserInput::NextScreen) => display_controller.next_screen(),
             Ok(UserInput::PrevScreen) => display_controller.previous_screen(),

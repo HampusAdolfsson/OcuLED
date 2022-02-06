@@ -1,15 +1,16 @@
-pub mod drawable_component;
 pub mod media;
+pub mod performance;
 
 use chrono::Local;
-use drawable_component::DrawableComponent;
 use crate::rendering;
 
-pub trait Screen: drawable_component::DrawableComponent {
+pub trait Screen {
     /**
      * Called when this screen is switched to, and will be drawn soon
      */
     fn on_mount(&self, canvas: &mut rendering::Canvas);
+
+    fn draw_to(&mut self, canvas: &mut rendering::Canvas);
 }
 
 pub struct ClockScreen;
@@ -18,9 +19,8 @@ impl Screen for ClockScreen {
     fn on_mount(&self, canvas: &mut rendering::Canvas) {
         canvas.set_font(include_bytes!("../../resources/fonts/Roboto-Bold.ttf"));
     }
-}
-impl DrawableComponent for ClockScreen {
-    fn draw_to(&self, canvas: &mut rendering::Canvas) {
+
+    fn draw_to(&mut self, canvas: &mut rendering::Canvas) {
         let now = Local::now();
         let clock_text = now.format("%H:%M").to_string();
         canvas.draw_text(
@@ -41,9 +41,8 @@ pub struct BitmapScreen {
 
 impl Screen for BitmapScreen {
     fn on_mount(&self, _: &mut rendering::Canvas) { }
-}
-impl DrawableComponent for BitmapScreen {
-    fn draw_to(&self, canvas: &mut rendering::Canvas) {
+
+    fn draw_to(&mut self, canvas: &mut rendering::Canvas) {
         canvas.bitmap.draw_bitmap(self.x, self.y, &self.bitmap);
     }
 }
