@@ -8,13 +8,18 @@ edition = "2021"
 [dependencies]
 fontdue = "0.6.2"
 chrono = "0.4"
-image = "0.23"
+image = "0.24"
 hotkey = "0.3"
+regex = "1"
+simple-error = "0.2.3"
 
 [dependencies.windows]
-version = "0.30"
+version = "0.32"
 features = [
     "Media_Control",
     "Foundation",
     "Foundation_Collections",
+    "Win32_System_Performance",
+    "Win32_Foundation",
+    "Win32_System_SystemInformation",
 ]
