@@ -44,6 +44,9 @@ impl super::Screen for MediaControls {
         }
         if selected_session == None {
             selected_session = self.manager.GetCurrentSession().ok();
+            if selected_session != None {
+                selected_status = selected_session.as_ref().unwrap().GetPlaybackInfo().unwrap().PlaybackStatus().ok();
+            }
         }
         match selected_session {
             Some(session) => {
