@@ -44,7 +44,7 @@ fn main() -> std::io::Result<()> {
     let mut media = screens::media::MediaControls::new();
 
     let stats_monitor = performance_monitor::PerformanceMonitor::new();
-    let mut perf = screens::performance::PerformanceScreen{ stats: stats_monitor.statistics() };
+    let mut perf = screens::performance::PerformanceScreen::new(stats_monitor.statistics());
 
     let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&mut clock, &mut bmp, &mut media, &mut perf]);
     let output = output::UdpOutput{ address: config::ADDRESS };

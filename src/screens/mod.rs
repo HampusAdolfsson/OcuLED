@@ -8,7 +8,7 @@ pub trait Screen {
     /**
      * Called when this screen is switched to, and will be drawn soon
      */
-    fn on_mount(&self, canvas: &mut rendering::Canvas);
+    fn on_mount(&mut self, canvas: &mut rendering::Canvas);
 
     fn draw_to(&mut self, canvas: &mut rendering::Canvas);
 }
@@ -16,7 +16,7 @@ pub trait Screen {
 pub struct ClockScreen;
 
 impl Screen for ClockScreen {
-    fn on_mount(&self, canvas: &mut rendering::Canvas) {
+    fn on_mount(&mut self, canvas: &mut rendering::Canvas) {
         canvas.set_font(include_bytes!("../../resources/fonts/Roboto-Bold.ttf"));
     }
 
@@ -40,7 +40,7 @@ pub struct BitmapScreen {
 }
 
 impl Screen for BitmapScreen {
-    fn on_mount(&self, _: &mut rendering::Canvas) { }
+    fn on_mount(&mut self, _: &mut rendering::Canvas) { }
 
     fn draw_to(&mut self, canvas: &mut rendering::Canvas) {
         canvas.bitmap.draw_bitmap(self.x, self.y, &self.bitmap);

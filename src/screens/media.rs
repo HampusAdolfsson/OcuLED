@@ -18,7 +18,7 @@ impl MediaControls {
 }
 
 impl super::Screen for MediaControls {
-    fn on_mount(&self, canvas: &mut rendering::Canvas) {
+    fn on_mount(&mut self, canvas: &mut rendering::Canvas) {
         canvas.set_font(include_bytes!("../../resources/fonts/Pixellari.ttf"));
         // canvas.set_font(include_bytes!("../../resources/fonts/Roboto-Medium.ttf"));
     }
