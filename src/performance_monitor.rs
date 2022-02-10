@@ -30,8 +30,8 @@ impl PerformanceMonitor {
                 let com_con = COMLibrary::without_security().unwrap();
                 let wmi_con = WMIConnection::with_namespace_path(r"root\OpenHardwareMonitor", com_con.into()).unwrap();
                 loop {
-                    // Updating cpu takes one second (because of how typeperf works), so this will loop every second
                     update_stats(&stats, &wmi_con);
+                    std::thread::sleep(std::time::Duration::from_secs(1));
                 }
             }),
         }
@@ -43,33 +43,36 @@ impl PerformanceMonitor {
 }
 
 fn update_stats(stats: &std::sync::Arc<std::sync::Mutex<PerformanceStatistics>>, wmi_con: &WMIConnection) {
-    let cpu = get_cpu_usage();
+    let cpu = get_openhardwaremonitor_sensor_value(wmi_con, "CPU Total", "Load").unwrap_or_default() / 100.0;
     let ram = get_ram_usage();
     let (gpu, vram, temperature) = match get_gpu_stats() {
         Ok(val) => val,
         Err(err) => { println!("{}", err); (0.0, 0.0, 0) },
     };
-    let results: Vec<HashMap<String, Variant>> = wmi_con.raw_query("SELECT Value FROM Sensor WHERE Name='CPU Package' AND SensorType='Temperature'").unwrap();
-    assert_eq!(results.len(), 1);
-    let val = results[0].get("Value").unwrap();
-    let cpu_temp = match val {
-        wmi::Variant::R4(fval) => fval,
-        _ => panic!("NAUUR"),
-    };
+    let cpu_temp = get_openhardwaremonitor_sensor_value(wmi_con, "CPU Package", "Temperature").unwrap_or_default();
     {
         let mut st = stats.lock().unwrap();
         st.memory_usage = ram;
         st.cpu_usage = cpu;
-        st.cpu_temperature = *cpu_temp;
+        st.cpu_temperature = cpu_temp;
         st.gpu_usage = gpu;
         st.vram_usage = vram;
         st.gpu_temperature = temperature;
     }
 }
 
-fn get_cpu_usage() -> f32 {
-    return (get_counter_value::<f32>(r"\Processor Information(_Total)\% Processor Utility") / 100.0).min(1.0);
+fn get_openhardwaremonitor_sensor_value(wmi_con: &WMIConnection, sensor_name: &str, sensor_type: &str) -> Result<f32, SimpleError> {
+    let results: Vec<HashMap<String, Variant>> = wmi_con.raw_query(format!("SELECT Value FROM Sensor WHERE Name='{}' AND SensorType='{}'", sensor_name, sensor_type)).unwrap();
+    if results.len() == 0 {
+        return Err(SimpleError::new(format!("No sensor '{}' of type '{}'.", sensor_name, sensor_type)));
+    }
+    let val = results[0].get("Value").unwrap();
+    return match val {
+        wmi::Variant::R4(fval) => Ok(*fval),
+        _ => Err(SimpleError::new("The value was not a float.")),
+    };
 }
+
 fn get_ram_usage() -> f32 {
     let mut mem_info: SystemInformation::MEMORYSTATUSEX = unsafe { std::mem::zeroed() };
     mem_info.dwLength = std::mem::size_of::<SystemInformation::MEMORYSTATUSEX>() as u32;
@@ -111,17 +114,4 @@ fn get_gpu_stats() -> Result<(f32, f32, u32), SimpleError> {
         },
         Err(err) => Err(SimpleError::new(format!("Fetching GPU information failed. Make sure nvidia-smi.exe is in the PATH. ({})", err))),
     }
-}
-
-fn get_counter_value<T>(counter: &str) -> T
-where
-    T: std::str::FromStr,
-    <T as std::str::FromStr>::Err: std::fmt::Debug,
-{
-    let output = std::process::Command::new("typeperf").arg(counter).args(["-sc", "1"]).output().unwrap();
-    let stdout = std::string::String::from_utf8_lossy(output.stdout.as_slice());
-    let regex = regex::Regex::new("\"(\\d*\\.\\d*)\"").expect("Regex failed to compile");
-    let captures = regex.captures(&stdout).unwrap();
-    let value = captures.get(1).unwrap();
-    return value.as_str().parse::<T>().unwrap();
 }
