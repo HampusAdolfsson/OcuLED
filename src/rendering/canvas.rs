@@ -6,7 +6,7 @@ use super::bitmap::Bitmap;
 #[derive(Clone)]
 pub struct Canvas {
     pub bitmap: Bitmap,
-    pub font: &'static [u8],
+    pub font: fontdue::Font,
 }
 
 /**
@@ -48,7 +48,7 @@ impl Canvas {
     pub fn new(width: usize, height: usize) -> Self {
         return Canvas{
             bitmap: Bitmap::new(width, height),
-            font: &[],
+            font: fontdue::Font::from_bytes(include_bytes!("../../resources/fonts/Roboto-Bold.ttf").as_slice(), fontdue::FontSettings::default()).unwrap(),
         }
     }
 
@@ -57,17 +57,13 @@ impl Canvas {
     }
 
     pub fn set_font(&mut self, font: &'static [u8]) {
-        self.font = font;
+        self.font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
     }
 
     /**
      * Draws the given text at the given position.
      */
     pub fn draw_text(&mut self, x: i32, y: i32, text: &str, font_size: f32, hor_alignment: HorizontalAlignment, ver_alignment: VerticalAlignment) {
-        assert_ne!(self.font.len(), 0);
-
-        let font = fontdue::Font::from_bytes(self.font, fontdue::FontSettings::default()).unwrap();
-
         let text_metrics = self.measure_text(text, font_size);
         let mut next_x = match hor_alignment {
             HorizontalAlignment::Left => x as f32,
@@ -82,7 +78,7 @@ impl Canvas {
         };
 
         for character in text.chars() {
-            let (metrics, buffer) = font.rasterize(character, font_size);
+            let (metrics, buffer) = self.font.rasterize(character, font_size);
 
             let padding = metrics.advance_width - metrics.width as f32;
             let top = baseline - metrics.height as i32 - metrics.ymin;
@@ -98,14 +94,12 @@ impl Canvas {
      * describe the size the text would have if rendered.
      */
     pub fn measure_text(&self, text: &str, font_size: f32) -> TextMetrics {
-        let font = fontdue::Font::from_bytes(self.font, fontdue::FontSettings::default()).unwrap();
-
         let mut x = 0f32;
         let mut base_height = 0i32;
         let mut bottom = 0i32;
 
         for character in text.chars() {
-            let metrics = font.metrics(character, font_size);
+            let metrics = self.font.metrics(character, font_size);
             let top = -(metrics.height as i32) - metrics.ymin;
             if top < base_height {
                 base_height = top;
