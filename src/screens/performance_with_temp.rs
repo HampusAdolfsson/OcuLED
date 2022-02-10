@@ -13,12 +13,15 @@ pub struct PerformanceWithTemperatureScreen {
     gpu: f32,
     gpu_temp: u32,
     cpu_temp: f32,
+    cpu_icon: rendering::Bitmap,
+    gpu_icon: rendering::Bitmap,
 }
 
 const TEXT_WIDTH: i32 = 45;
-const BAR_HEIGHT: usize = 14;
+const BAR_HEIGHT: usize = 10;
 const FONT_SIZE: f32 = 14.0;
 const SMOOTHING_AMOUNT: f32 = 0.5;
+const SEPARATOR_MARGIN: i32 = 6;
 
 impl PerformanceWithTemperatureScreen {
     pub fn new(stats: Arc<Mutex<performance_monitor::PerformanceStatistics>>) -> Self {
@@ -29,6 +32,8 @@ impl PerformanceWithTemperatureScreen {
             gpu: 0.0,
             gpu_temp: 0,
             cpu_temp: 0.0,
+            cpu_icon: rendering::Bitmap::from_png(include_bytes!("../../resources/images/cpu.png")),
+            gpu_icon: rendering::Bitmap::from_png(include_bytes!("../../resources/images/gpu.png")),
         }
     }
 }
@@ -53,16 +58,17 @@ impl Screen for PerformanceWithTemperatureScreen {
             self.cpu_temp = stats.cpu_temperature;
         };
         let bar_width = canvas.bitmap.width - TEXT_WIDTH as usize;
+        let separator_pos = BAR_HEIGHT as i32 + SEPARATOR_MARGIN;
 
-        canvas.bitmap.draw_bitmap(90, 22, &rendering::Bitmap::from_png(include_bytes!("../../resources/images/cpu.png")));
+        canvas.bitmap.draw_bitmap((canvas.bitmap.width * 3 / 4 - self.cpu_icon.width / 2) as i32 + 3, (canvas.bitmap.height - self.cpu_icon.height) as i32 / 2, &self.cpu_icon);
         canvas.draw_text(canvas.bitmap.width as i32, BAR_HEIGHT as i32 / 2, &format!("{}°C", self.cpu_temp), FONT_SIZE, rendering::HorizontalAlignment::Right, rendering::VerticalAlignment::CenterBase);
         self.draw_bar(canvas, 0, 0, BAR_HEIGHT, bar_width, self.cpu);
 
-        canvas.bitmap.draw_rect_with_slits(0, 20, canvas.bitmap.width / 2, 1, 2);
-        canvas.bitmap.draw_rect_with_slits(canvas.bitmap.width as i32 / 2, canvas.bitmap.height as i32 - 20, canvas.bitmap.width / 2, 1, 2);
-        canvas.bitmap.draw_rect_with_slits(canvas.bitmap.width as i32 / 2, 20, 1, canvas.bitmap.height - 40, 2);
+        canvas.bitmap.draw_rect_with_slits(0, separator_pos, canvas.bitmap.width / 2, 1, 2);
+        canvas.bitmap.draw_rect_with_slits(canvas.bitmap.width as i32 / 2, canvas.bitmap.height as i32 - separator_pos, canvas.bitmap.width / 2, 1, 2);
+        canvas.bitmap.draw_rect_with_slits(canvas.bitmap.width as i32 / 2, separator_pos, 1, canvas.bitmap.height - 2*separator_pos as usize, 2);
 
-        canvas.bitmap.draw_bitmap(16, 26, &rendering::Bitmap::from_png(include_bytes!("../../resources/images/gpu.png")));
+        canvas.bitmap.draw_bitmap((canvas.bitmap.width / 4 - self.gpu_icon.width / 2) as i32, (canvas.bitmap.height - self.gpu_icon.height) as i32 / 2, &self.gpu_icon);
         canvas.draw_text(0, (canvas.bitmap.height - BAR_HEIGHT / 2) as i32, &format!("{}°C", self.gpu_temp), FONT_SIZE, rendering::HorizontalAlignment::Left, rendering::VerticalAlignment::CenterBase);
         self.draw_bar_double(canvas, TEXT_WIDTH, (canvas.bitmap.height - BAR_HEIGHT) as i32, BAR_HEIGHT, bar_width, self.gpu, self.vram);
 
