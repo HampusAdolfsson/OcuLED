@@ -71,7 +71,7 @@ impl Bitmap {
             }
         }
     }
-    pub fn draw_rect_dotted(&mut self, x: i32, y: i32, width: usize, height: usize) {
+    pub fn draw_rect_with_slits(&mut self, x: i32, y: i32, width: usize, height: usize, slit_interval: usize) {
         let x_start = x.max(0).min(self.width as i32) as usize;
         let x_end = (x + width as i32).max(0).min(self.width as i32) as usize;
         let y_start = y.max(0).min(self.height as i32) as usize;
@@ -79,7 +79,7 @@ impl Bitmap {
 
         for y_draw in y_start..y_end {
             for x_draw in x_start..x_end {
-                if y_draw % 4 == x_draw % 4 { continue; }
+                if y_draw % slit_interval == x_draw % slit_interval { continue; }
                 self.buffer[y_draw * self.width + x_draw] = 0xff;
             }
         }

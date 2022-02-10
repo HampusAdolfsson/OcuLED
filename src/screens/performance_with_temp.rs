@@ -4,14 +4,15 @@ use crate::performance_monitor;
 use std::sync::{Arc, Mutex};
 
 /**
- * Displays three computer performance bars (cpu usage, memory usage and combined gpu/vram usage)
+ * Displays two computer performance bars (cpu usage and combined gpu/vram usage), as well as cpu and gpu temperatures
  */
-pub struct PerformanceScreen {
+pub struct PerformanceWithTemperatureScreen {
     stats: Arc<Mutex<performance_monitor::PerformanceStatistics>>,
     cpu: f32,
-    mem: f32,
     vram: f32,
     gpu: f32,
+    gpu_temp: u32,
+    cpu_temp: f32,
 }
 
 const TEXT_WIDTH: i32 = 45;
@@ -19,24 +20,24 @@ const BAR_HEIGHT: usize = 14;
 const FONT_SIZE: f32 = 14.0;
 const SMOOTHING_AMOUNT: f32 = 0.5;
 
-impl PerformanceScreen {
+impl PerformanceWithTemperatureScreen {
     pub fn new(stats: Arc<Mutex<performance_monitor::PerformanceStatistics>>) -> Self {
-        PerformanceScreen {
+        PerformanceWithTemperatureScreen {
             stats: stats,
             cpu: 0.0,
-            mem: 0.0,
             vram: 0.0,
             gpu: 0.0,
+            gpu_temp: 0,
+            cpu_temp: 0.0,
         }
     }
 }
 
-impl Screen for PerformanceScreen {
+impl Screen for PerformanceWithTemperatureScreen {
     fn on_mount(&mut self, canvas: &mut rendering::Canvas) {
         canvas.set_font(include_bytes!("../../resources/fonts/Roboto-Bold.ttf"));
         // Gives a cool effect with the smoothing
         self.cpu = 0.0;
-        self.mem = 0.0;
         self.gpu = 0.0;
         self.vram = 0.0;
     }
@@ -46,25 +47,29 @@ impl Screen for PerformanceScreen {
             // this is framerate-dependent, but I'm too lazy do to it right :')
             let stats = self.stats.lock().unwrap();
             self.cpu = self.cpu * SMOOTHING_AMOUNT + stats.cpu_usage * (1.0 - SMOOTHING_AMOUNT);
-            self.mem = self.mem * SMOOTHING_AMOUNT + stats.memory_usage * (1.0 - SMOOTHING_AMOUNT);
             self.vram = self.vram * SMOOTHING_AMOUNT + stats.vram_usage * (1.0 - SMOOTHING_AMOUNT);
             self.gpu = self.gpu * SMOOTHING_AMOUNT + stats.gpu_usage * (1.0 - SMOOTHING_AMOUNT);
+            self.gpu_temp = stats.gpu_temperature;
+            self.cpu_temp = stats.cpu_temperature;
         };
-
         let bar_width = canvas.bitmap.width - TEXT_WIDTH as usize;
-        canvas.draw_text(0, BAR_HEIGHT as i32 / 2, "CPU", FONT_SIZE, rendering::HorizontalAlignment::Left, rendering::VerticalAlignment::CenterBase);
-        self.draw_bar(canvas, TEXT_WIDTH, 0, BAR_HEIGHT, bar_width, self.cpu);
 
-        canvas.draw_text(0, canvas.bitmap.height as i32 / 2, "MEM", FONT_SIZE, rendering::HorizontalAlignment::Left, rendering::VerticalAlignment::CenterBase);
-        self.draw_bar(canvas, TEXT_WIDTH, (canvas.bitmap.height / 2 - BAR_HEIGHT / 2) as i32, BAR_HEIGHT, bar_width, self.mem);
+        canvas.bitmap.draw_bitmap(90, 22, &rendering::Bitmap::from_png(include_bytes!("../../resources/images/cpu.png")));
+        canvas.draw_text(canvas.bitmap.width as i32, BAR_HEIGHT as i32 / 2, &format!("{}°C", self.cpu_temp), FONT_SIZE, rendering::HorizontalAlignment::Right, rendering::VerticalAlignment::CenterBase);
+        self.draw_bar(canvas, 0, 0, BAR_HEIGHT, bar_width, self.cpu);
 
-        canvas.draw_text(0, (canvas.bitmap.height - BAR_HEIGHT / 2) as i32, "GPU", FONT_SIZE, rendering::HorizontalAlignment::Left, rendering::VerticalAlignment::CenterBase);
+        canvas.bitmap.draw_rect_with_slits(0, 20, canvas.bitmap.width / 2, 1, 2);
+        canvas.bitmap.draw_rect_with_slits(canvas.bitmap.width as i32 / 2, canvas.bitmap.height as i32 - 20, canvas.bitmap.width / 2, 1, 2);
+        canvas.bitmap.draw_rect_with_slits(canvas.bitmap.width as i32 / 2, 20, 1, canvas.bitmap.height - 40, 2);
+
+        canvas.bitmap.draw_bitmap(16, 26, &rendering::Bitmap::from_png(include_bytes!("../../resources/images/gpu.png")));
+        canvas.draw_text(0, (canvas.bitmap.height - BAR_HEIGHT / 2) as i32, &format!("{}°C", self.gpu_temp), FONT_SIZE, rendering::HorizontalAlignment::Left, rendering::VerticalAlignment::CenterBase);
         self.draw_bar_double(canvas, TEXT_WIDTH, (canvas.bitmap.height - BAR_HEIGHT) as i32, BAR_HEIGHT, bar_width, self.gpu, self.vram);
 
     }
 }
 
-impl PerformanceScreen {
+impl PerformanceWithTemperatureScreen {
     fn draw_bar(&self, canvas: &mut rendering::Canvas, x: i32, y: i32, height: usize, width: usize, fill: f32) {
         self.draw_bar_limits(canvas, x, y, height, width);
         canvas.bitmap.draw_rect_with_slits(x + 1, y + 2, ((width as f32 - 2.0) * fill) as usize, height - 4, 4);
@@ -74,7 +79,7 @@ impl PerformanceScreen {
         self.draw_bar_limits(canvas, x, y, height, width);
         // fill bar
         canvas.bitmap.draw_rect_with_slits(x + 1, y + 2, ((width as f32 - 2.0) * fill_upper) as usize, (height - 4) / 2, 4);
-        canvas.bitmap.draw_rect(x + 1, y + 2 + (height as i32 - 4) / 2, ((width as f32 - 2.0) * fill_lower) as usize, (height - 4) / 2);
+        canvas.bitmap.draw_rect_with_slits(x + 1, y + 2 + (height as i32 - 4) / 2, ((width as f32 - 2.0) * fill_lower) as usize, (height - 4) / 2, 2);
     }
 
     fn draw_bar_limits(&self, canvas: &mut rendering::Canvas, x: i32, y: i32, height: usize, width: usize) {

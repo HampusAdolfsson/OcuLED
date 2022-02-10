@@ -45,8 +45,9 @@ fn main() -> std::io::Result<()> {
 
     let stats_monitor = performance_monitor::PerformanceMonitor::new();
     let mut perf = screens::performance::PerformanceScreen::new(stats_monitor.statistics());
+    let mut perf_temperature = screens::performance_with_temp::PerformanceWithTemperatureScreen::new(stats_monitor.statistics());
 
-    let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&mut clock, &mut bmp, &mut media, &mut perf]);
+    let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&mut clock, &mut bmp, &mut media, &mut perf, &mut perf_temperature]);
     let output = output::UdpOutput{ address: config::ADDRESS };
 
     let mut last_time = std::time::Instant::now();

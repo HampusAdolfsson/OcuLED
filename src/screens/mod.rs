@@ -1,5 +1,6 @@
 pub mod media;
 pub mod performance;
+pub mod performance_with_temp;
 
 use chrono::Local;
 use crate::rendering;
