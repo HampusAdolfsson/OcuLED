@@ -10,10 +10,10 @@ pub struct DisplayController<'a> {
 }
 
 impl<'a> DisplayController<'a> {
-    pub fn new(width: usize, height: usize, screens: Vec<&'a mut dyn Screen>) -> Self {
+    pub fn new(width: usize, height: usize, mut screens: Vec<&'a mut dyn Screen>) -> Self {
         let mut canvas = rendering::Canvas::new(width, height);
-        canvas.set_font(include_bytes!("../resources/fonts/Roboto-Bold.ttf"));
         let num_screens = screens.len();
+        screens[0].on_mount(&mut canvas);
         DisplayController{
             screens: screens,
             active_screen: 0,
