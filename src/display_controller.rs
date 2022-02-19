@@ -35,10 +35,10 @@ impl<'a> DisplayController<'a> {
         self.indicator.show(prev, true);
     }
 
-    pub fn draw_to(&mut self, target: &dyn output::RenderTarget) -> std::io::Result<()> {
+    pub fn draw_to(&mut self, target: &dyn output::RenderTarget, elapsed: &std::time::Duration) -> std::io::Result<()> {
         self.canvas.clear();
         let active_screen = &mut self.screens[self.active_screen];
-        active_screen.draw_to(&mut self.canvas);
+        active_screen.draw_to(&mut self.canvas, elapsed);
         if self.indicator.should_draw() {
             self.indicator.draw_to(&mut self.canvas);
         }

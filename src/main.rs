@@ -10,7 +10,7 @@ use std::sync::mpsc;
 
 
 mod config {
-    pub const ADDRESS: &str = "192.168.1.11:4435";
+    pub const ADDRESS: &str = "192.168.1.41:4435";
     pub const DISPLAY_WIDTH: usize = 128;
     pub const DISPLAY_HEIGHT: usize = 64;
 }
@@ -36,18 +36,13 @@ fn main() -> std::io::Result<()> {
     });
 
     let mut clock = screens::ClockScreen{};
-    let mut bmp = screens::BitmapScreen{
-        bitmap: rendering::Bitmap::from_png(include_bytes!("../resources/images/bongo_cat.png")),
-        x: 0,
-        y: 0,
-    };
     let mut media = screens::media::MediaControls::new();
 
     let stats_monitor = performance_monitor::PerformanceMonitor::new();
     let mut perf = screens::performance::PerformanceScreen::new(stats_monitor.statistics());
     let mut perf_temperature = screens::performance_with_temp::PerformanceWithTemperatureScreen::new(stats_monitor.statistics());
 
-    let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&mut clock, &mut bmp, &mut media, &mut perf, &mut perf_temperature]);
+    let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&mut clock, &mut media, &mut perf, &mut perf_temperature]);
     let output = output::UdpOutput{ address: config::ADDRESS };
 
     let mut last_time = std::time::Instant::now();
@@ -55,7 +50,7 @@ fn main() -> std::io::Result<()> {
         let elapsed = last_time.elapsed();
         last_time = std::time::Instant::now();
         display_controller.tick(elapsed);
-        display_controller.draw_to(&output)?;
+        display_controller.draw_to(&output, &elapsed)?;
 
         let event = rx.recv_timeout(std::time::Duration::from_millis(25));
         match event {

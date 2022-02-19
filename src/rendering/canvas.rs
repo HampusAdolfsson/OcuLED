@@ -56,15 +56,23 @@ impl Canvas {
         self.bitmap.clear();
     }
 
-    pub fn set_font(&mut self, font: &'static [u8]) {
+    pub fn set_font(&mut self, font: fontdue::Font) {
+        self.font = font;
+    }
+    // This is expensive, so don't call this every frame
+    pub fn set_font_from_bytes(&mut self, font: &[u8]) {
         self.font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
+    }
+
+    pub fn get_font(&self) -> &fontdue::Font {
+        &self.font
     }
 
     /**
      * Draws the given text at the given position.
      */
     pub fn draw_text(&mut self, x: i32, y: i32, text: &str, font_size: f32, hor_alignment: HorizontalAlignment, ver_alignment: VerticalAlignment) {
-        let text_metrics = self.measure_text(text, font_size);
+        let text_metrics = super::measure_text(text, &self.font, font_size);
         let mut next_x = match hor_alignment {
             HorizontalAlignment::Left => x as f32,
             HorizontalAlignment::Center => x as f32 - text_metrics.width as f32 / 2.0,

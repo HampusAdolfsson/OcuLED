@@ -11,17 +11,17 @@ pub trait Screen {
      */
     fn on_mount(&mut self, canvas: &mut rendering::Canvas);
 
-    fn draw_to(&mut self, canvas: &mut rendering::Canvas);
+    fn draw_to(&mut self, canvas: &mut rendering::Canvas, elapsed: &std::time::Duration);
 }
 
 pub struct ClockScreen;
 
 impl Screen for ClockScreen {
     fn on_mount(&mut self, canvas: &mut rendering::Canvas) {
-        canvas.set_font(include_bytes!("../../resources/fonts/Roboto-Bold.ttf"));
+        canvas.set_font_from_bytes(include_bytes!("../../resources/fonts/Roboto-Bold.ttf"));
     }
 
-    fn draw_to(&mut self, canvas: &mut rendering::Canvas) {
+    fn draw_to(&mut self, canvas: &mut rendering::Canvas, _: &std::time::Duration) {
         let now = Local::now();
         let clock_text = now.format("%H:%M").to_string();
         canvas.draw_text(
@@ -31,19 +31,5 @@ impl Screen for ClockScreen {
             36.0,
             rendering::HorizontalAlignment::Center,
             rendering::VerticalAlignment::CenterBase);
-    }
-}
-
-pub struct BitmapScreen {
-    pub bitmap: rendering::Bitmap,
-    pub x: i32,
-    pub y: i32,
-}
-
-impl Screen for BitmapScreen {
-    fn on_mount(&mut self, _: &mut rendering::Canvas) { }
-
-    fn draw_to(&mut self, canvas: &mut rendering::Canvas) {
-        canvas.bitmap.draw_bitmap(self.x, self.y, &self.bitmap);
     }
 }

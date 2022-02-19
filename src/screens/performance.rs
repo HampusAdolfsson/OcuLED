@@ -17,7 +17,7 @@ pub struct PerformanceScreen {
 const TEXT_WIDTH: i32 = 45;
 const BAR_HEIGHT: usize = 14;
 const FONT_SIZE: f32 = 14.0;
-const SMOOTHING_AMOUNT: f32 = 0.5;
+const SMOOTHING_AMOUNT: f32 = 0.75;
 
 impl PerformanceScreen {
     pub fn new(stats: Arc<Mutex<performance_monitor::PerformanceStatistics>>) -> Self {
@@ -33,7 +33,7 @@ impl PerformanceScreen {
 
 impl Screen for PerformanceScreen {
     fn on_mount(&mut self, canvas: &mut rendering::Canvas) {
-        canvas.set_font(include_bytes!("../../resources/fonts/Roboto-Bold.ttf"));
+        canvas.set_font_from_bytes(include_bytes!("../../resources/fonts/Roboto-Bold.ttf"));
         // Gives a cool effect with the smoothing
         self.cpu = 0.0;
         self.mem = 0.0;
@@ -41,7 +41,7 @@ impl Screen for PerformanceScreen {
         self.vram = 0.0;
     }
 
-    fn draw_to(&mut self, canvas: &mut rendering::Canvas) {
+    fn draw_to(&mut self, canvas: &mut rendering::Canvas, _: &std::time::Duration) {
         {
             // this is framerate-dependent, but I'm too lazy do to it right :')
             let stats = self.stats.lock().unwrap();
