@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 extern crate fontdue;
 
 mod output;
@@ -32,6 +33,12 @@ fn main() -> std::io::Result<()> {
                 'I' as u32,
                 move || { tx.send(UserInput::PrevScreen).unwrap(); }).unwrap();
         }
+        {
+            let tx = tx.clone();
+            hk.register_hotkey(hotkey::modifiers::CONTROL | hotkey::modifiers::ALT | hotkey::modifiers::SHIFT,
+                'P' as u32,
+                move || { tx.send(UserInput::Quit).unwrap(); }).unwrap();
+        }
         hk.listen();
     });
 
@@ -56,7 +63,8 @@ fn main() -> std::io::Result<()> {
         match event {
             Ok(UserInput::NextScreen) => display_controller.next_screen(),
             Ok(UserInput::PrevScreen) => display_controller.previous_screen(),
-            Err(_) => (),
+            Ok(UserInput::Quit) => break Ok(()),
+            Err(_) => {},
         }
     }
 }
@@ -64,4 +72,5 @@ fn main() -> std::io::Result<()> {
 enum UserInput {
     NextScreen,
     PrevScreen,
+    Quit,
 }
