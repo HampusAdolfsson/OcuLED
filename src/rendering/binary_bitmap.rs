@@ -1,6 +1,7 @@
 /**
  * A bitmap with one bit per pixel.
  */
+#[derive(Clone)]
 pub struct BinaryBitmap {
     pub width: usize,
     pub height: usize,

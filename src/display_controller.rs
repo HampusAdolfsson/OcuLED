@@ -5,15 +5,15 @@ use super::output;
 pub struct DisplayController<'a> {
     screens: Vec<&'a mut dyn Screen>,
     active_screen: usize,
-    canvas: rendering::Canvas,
+    canvas: rendering::Bitmap,
     indicator: ScreenIndicator,
 }
 
 impl<'a> DisplayController<'a> {
     pub fn new(width: usize, height: usize, mut screens: Vec<&'a mut dyn Screen>) -> Self {
-        let mut canvas = rendering::Canvas::new(width, height);
+        let mut canvas = rendering::Bitmap::new(width, height);
         let num_screens = screens.len();
-        screens[0].on_mount(&mut canvas);
+        screens[0].on_mount();
         DisplayController{
             screens: screens,
             active_screen: 0,
@@ -25,27 +25,29 @@ impl<'a> DisplayController<'a> {
     pub fn next_screen(&mut self) {
         let prev = self.active_screen;
         self.active_screen = (self.active_screen + 1) % self.screens.len();
-        self.screens[self.active_screen].on_mount(&mut self.canvas);
+        self.screens[self.active_screen].on_mount();
         self.indicator.show(prev, false);
     }
     pub fn previous_screen(&mut self) {
         let prev = self.active_screen;
         self.active_screen = (self.active_screen + self.screens.len() - 1) % self.screens.len();
-        self.screens[self.active_screen].on_mount(&mut self.canvas);
+        self.screens[self.active_screen].on_mount();
         self.indicator.show(prev, true);
     }
 
-    pub fn draw_to(&mut self, target: &dyn output::RenderTarget, elapsed: &std::time::Duration) -> std::io::Result<()> {
+    pub fn draw_to(&mut self, target: &mut dyn output::RenderTarget, elapsed: &std::time::Duration) -> std::io::Result<()> {
+        self.update(elapsed);
+
         self.canvas.clear();
         let active_screen = &mut self.screens[self.active_screen];
         active_screen.draw_to(&mut self.canvas, elapsed);
         if self.indicator.should_draw() {
             self.indicator.draw_to(&mut self.canvas);
         }
-        target.render_bitmap((&self.canvas.bitmap).into())
+        target.render_bitmap((&self.canvas).into())
     }
 
-    pub fn tick(&mut self, elapsed: std::time::Duration) {
+    fn update(&mut self, elapsed: &std::time::Duration) {
         self.indicator.tick(elapsed);
     }
 }
@@ -61,9 +63,9 @@ struct ScreenIndicator {
 }
 
 impl ScreenIndicator {
-    fn draw_to(&self, canvas: &mut rendering::Canvas) {
+    fn draw_to(&self, canvas: &mut rendering::Bitmap) {
         let size = self.num_screens;
-        let rect_width = canvas.bitmap.width as i32 / size as i32;
+        let rect_width = canvas.width as i32 / size as i32;
         let from = rect_width * self.from as i32;
         let target = from + if self.to_left { -rect_width } else { rect_width };
 
@@ -74,16 +76,16 @@ impl ScreenIndicator {
         let collapse_progress = ((self.elapsed.as_millis() as i32 - self.move_duration.as_millis() as i32 - self.wait_duration.as_millis() as i32) as f32 / self.collapse_duration.as_millis() as f32).min(1.0).max(0.0);
         let adjusted_width = ((rect_width-4) as f32 * (1.0 - collapse_progress)) as i32;
 
-        canvas.bitmap.draw_rect(at as i32 + (rect_width - adjusted_width) / 2, canvas.bitmap.height as i32 - 1, adjusted_width as usize, 1);
+        canvas.draw_rect(at as i32 + (rect_width - adjusted_width) / 2, canvas.height as i32 - 1, adjusted_width as usize, 1);
 
         // check underflow
         if at < 0.0 {
-            canvas.bitmap.draw_rect(canvas.bitmap.width as i32 + at as i32 + (rect_width - adjusted_width) / 2, canvas.bitmap.height as i32 - 1, adjusted_width as usize, 1);
+            canvas.draw_rect(canvas.width as i32 + at as i32 + (rect_width - adjusted_width) / 2, canvas.height as i32 - 1, adjusted_width as usize, 1);
         }
         // check overflow
-        let overflow = at as i32 + rect_width - canvas.bitmap.width as i32;
+        let overflow = at as i32 + rect_width - canvas.width as i32;
         if overflow > 0 {
-            canvas.bitmap.draw_rect(overflow - rect_width + (rect_width - adjusted_width) / 2, canvas.bitmap.height as i32 - 1, adjusted_width as usize, 1);
+            canvas.draw_rect(overflow - rect_width + (rect_width - adjusted_width) / 2, canvas.height as i32 - 1, adjusted_width as usize, 1);
         }
     }
 }
@@ -103,10 +105,12 @@ impl ScreenIndicator {
     pub fn should_draw(&self) -> bool {
         self.elapsed < self.move_duration + self.wait_duration + self.collapse_duration
     }
-    pub fn tick(&mut self, elapsed: std::time::Duration) {
+    pub fn tick(&mut self, elapsed: &std::time::Duration) -> bool {
         if self.should_draw() {
-            self.elapsed += elapsed;
+            self.elapsed += *elapsed;
+            return true
         }
+        false
     }
 
     pub fn show(&mut self, from: usize, to_left: bool) {

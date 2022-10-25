@@ -39,6 +39,25 @@ impl Bitmap {
         }
     }
 
+    pub fn from_text(text: &str, font_size: f32, font: &fontdue::Font) -> Self {
+        let text_metrics = super::measure_text(text, font, font_size);
+        let baseline = text_metrics.base_height as i32;
+        let mut next_x = 0.0;
+
+        let mut bmp = Bitmap::new(text_metrics.width, text_metrics.height);
+        for character in text.chars() {
+            let (metrics, buffer) = font.rasterize(character, font_size);
+
+            let padding = metrics.advance_width - metrics.width as f32;
+            let top = baseline - metrics.height as i32 - metrics.ymin;
+            let char_bmp = Bitmap{ width: metrics.width, height: metrics.height, buffer: buffer};
+            bmp.draw_bitmap((next_x + padding / 2.0) as i32, top, &char_bmp);
+
+            next_x += metrics.advance_width;
+        }
+        bmp
+   }
+
     pub fn clear(&mut self) {
         self.buffer.fill(0);
     }
@@ -54,7 +73,7 @@ impl Bitmap {
                 if actual_x < 0 { continue; }
                 if actual_x as usize >= self.width { break; }
 
-                self.buffer[(actual_y * self.width as i32 + actual_x) as usize] = bitmap.buffer[bmp_x + bmp_y * bitmap.width];
+                self.buffer[(actual_y * self.width as i32 + actual_x) as usize] |= bitmap.buffer[bmp_x + bmp_y * bitmap.width];
             }
         }
     }

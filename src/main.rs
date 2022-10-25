@@ -1,17 +1,20 @@
 #![windows_subsystem = "windows"]
 extern crate fontdue;
+#[macro_use]
+extern crate lazy_static;
 
 mod output;
 mod rendering;
 mod display_controller;
 mod screens;
 mod performance_monitor;
+mod components;
 
 use std::sync::mpsc;
 
 
 mod config {
-    pub const ADDRESS: &str = "192.168.1.41:4435";
+    pub const ADDRESS: &str = "192.168.1.6:4435";
     pub const DISPLAY_WIDTH: usize = 128;
     pub const DISPLAY_HEIGHT: usize = 64;
 }
@@ -42,24 +45,23 @@ fn main() -> std::io::Result<()> {
         hk.listen();
     });
 
-    let mut clock = screens::ClockScreen{};
+    let mut clock = screens::ClockScreen::new();
     let mut media = screens::media::MediaControls::new();
 
     let stats_monitor = performance_monitor::PerformanceMonitor::new();
-    let mut perf = screens::performance::PerformanceScreen::new(stats_monitor.statistics());
-    let mut perf_temperature = screens::performance_with_temp::PerformanceWithTemperatureScreen::new(stats_monitor.statistics());
+    let mut perf_mem = screens::performance::PerformanceWithMemoryScreen::new(stats_monitor.statistics());
+    let mut perf_temp = screens::performance::PerformanceWithTemperatureScreen::new(stats_monitor.statistics());
 
-    let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&mut clock, &mut media, &mut perf, &mut perf_temperature]);
-    let output = output::UdpOutput{ address: config::ADDRESS };
+    let mut display_controller = display_controller::DisplayController::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT, vec![&mut clock, &mut media, &mut perf_mem, &mut perf_temp]);
+    let mut output = output::UdpOutput{ address: config::ADDRESS, previous: rendering::BinaryBitmap{ width: 0, height: 0, buffer: Vec::new() } };
 
     let mut last_time = std::time::Instant::now();
     loop {
         let elapsed = last_time.elapsed();
         last_time = std::time::Instant::now();
-        display_controller.tick(elapsed);
-        display_controller.draw_to(&output, &elapsed)?;
+        display_controller.draw_to(&mut output, &elapsed)?;
 
-        let event = rx.recv_timeout(std::time::Duration::from_millis(25));
+        let event = rx.recv_timeout(std::time::Duration::from_millis(50));
         match event {
             Ok(UserInput::NextScreen) => display_controller.next_screen(),
             Ok(UserInput::PrevScreen) => display_controller.previous_screen(),
@@ -69,7 +71,7 @@ fn main() -> std::io::Result<()> {
     }
 }
 
-enum UserInput {
+pub enum UserInput {
     NextScreen,
     PrevScreen,
     Quit,
