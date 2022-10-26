@@ -22,8 +22,8 @@ pub struct PerformanceWithTemperatureScreen {
 
 const TEXT_WIDTH: u32 = 45;
 const BAR_HEIGHT: u32 = 10;
-const FONT_SIZE: f32 = 12.0;
-const SEPARATOR_MARGIN: i32 = 6;
+const FONT_SIZE: f32 = 9.0;
+const SEPARATOR_MARGIN: i32 = 8;
 
 impl PerformanceWithTemperatureScreen {
     pub fn new(stats: Arc<Mutex<performance_monitor::PerformanceStatistics>>) -> Self {
@@ -31,12 +31,12 @@ impl PerformanceWithTemperatureScreen {
             stats,
             cpu_widgets: (
                 BitmapWidget::new(rendering::Bitmap::from_png(include_bytes!("../../../resources/images/cpu.png"))),
-                SimpleTextWidget::new("".to_string(), &fonts::SQHEAD, FONT_SIZE),
+                SimpleTextWidget::new("".to_string(), &fonts::PIXELOID, FONT_SIZE),
                 BarWidget::new(),
             ),
             gpu_widgets: (
                 BitmapWidget::new(rendering::Bitmap::from_png(include_bytes!("../../../resources/images/gpu.png"))),
-                SimpleTextWidget::new("".to_string(), &fonts::SQHEAD, FONT_SIZE),
+                SimpleTextWidget::new("".to_string(), &fonts::PIXELOID, FONT_SIZE),
                 DoubleBarWidget::new(),
             ),
         }
