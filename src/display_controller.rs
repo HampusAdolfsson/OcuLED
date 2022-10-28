@@ -1,16 +1,21 @@
+use windows::Media::PlaybackRateChangeRequestedEventArgs;
+
+use crate::components::Widget;
 use crate::rendering;
 use super::screens::Screen;
 use super::output;
 
-pub struct DisplayController<'a> {
+pub struct DisplayController<'a, S: Screen> {
     screens: Vec<&'a mut dyn Screen>,
     active_screen: usize,
     canvas: rendering::Bitmap,
     indicator: ScreenIndicator,
+    screensaver: S,
+    screensaver_active: bool,
 }
 
-impl<'a> DisplayController<'a> {
-    pub fn new(width: usize, height: usize, mut screens: Vec<&'a mut dyn Screen>) -> Self {
+impl<'a, S: Screen> DisplayController<'a, S> {
+    pub fn new(width: usize, height: usize, mut screens: Vec<&'a mut dyn Screen>, screensaver: S) -> Self {
         let mut canvas = rendering::Bitmap::new(width, height);
         let num_screens = screens.len();
         screens[0].on_mount();
@@ -19,31 +24,53 @@ impl<'a> DisplayController<'a> {
             active_screen: 0,
             canvas: canvas,
             indicator: ScreenIndicator::new(num_screens),
+            screensaver,
+            screensaver_active: false,
         }
     }
 
     pub fn next_screen(&mut self) {
+        if self.screensaver_active { return; }
         let prev = self.active_screen;
         self.active_screen = (self.active_screen + 1) % self.screens.len();
         self.screens[self.active_screen].on_mount();
         self.indicator.show(prev, false);
     }
     pub fn previous_screen(&mut self) {
+        if self.screensaver_active { return; }
         let prev = self.active_screen;
         self.active_screen = (self.active_screen + self.screens.len() - 1) % self.screens.len();
         self.screens[self.active_screen].on_mount();
         self.indicator.show(prev, true);
+    }
+    pub fn set_screensaver_active(&mut self, active: bool) {
+        if self.screensaver_active == active { return; }
+        self.screensaver_active = active;
+        if active {
+            self.screensaver.on_mount();
+        } else {
+            self.screens[self.active_screen].on_mount();
+        }
     }
 
     pub fn draw_to(&mut self, target: &mut dyn output::RenderTarget, elapsed: &std::time::Duration) -> std::io::Result<()> {
         self.update(elapsed);
 
         self.canvas.clear();
-        let active_screen = &mut self.screens[self.active_screen];
-        active_screen.draw_to(&mut self.canvas, elapsed);
-        if self.indicator.should_draw() {
-            self.indicator.draw_to(&mut self.canvas);
+
+        // let canvas_bounds = crate::components::Bounds::cover_bitmap(&self.canvas);
+        // let bounds = crate::components::EmptyBounds::new().with_size(self.gif.size()).center_in(&canvas_bounds);
+        // self.gif.draw(&mut self.canvas, bounds, elapsed);
+        if self.screensaver_active {
+            self.screensaver.draw_to(&mut self.canvas, elapsed);
+        } else {
+            let active_screen = &mut self.screens[self.active_screen];
+            active_screen.draw_to(&mut self.canvas, elapsed);
+            if self.indicator.should_draw() {
+                self.indicator.draw_to(&mut self.canvas);
+            }
         }
+
         target.render_bitmap((&self.canvas).into())
     }
 

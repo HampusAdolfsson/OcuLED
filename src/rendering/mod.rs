@@ -1,8 +1,10 @@
 mod bitmap;
 mod binary_bitmap;
+mod video;
 
 pub use bitmap::Bitmap;
 pub use binary_bitmap::BinaryBitmap;
+pub use video::Video;
 
 /**
  * Describes the size of a string of text for some font and font size

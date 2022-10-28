@@ -19,6 +19,14 @@ impl Bitmap {
         }
     }
 
+    pub fn from_raw_bytes(bytes: &[u8], width: usize) -> Self {
+        return Bitmap {
+            width,
+            height: bytes.len() / width,
+            buffer: bytes.to_vec(),
+        }
+    }
+
     /** Decodes bytes in monochrome png format (e.g. read from a png file) into a bitmap */
     pub fn from_png(bytes: &[u8]) -> Self {
         let cursor = std::io::Cursor::new(bytes);

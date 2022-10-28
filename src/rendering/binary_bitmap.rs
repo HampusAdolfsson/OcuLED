@@ -16,7 +16,7 @@ impl From<&super::bitmap::Bitmap> for BinaryBitmap {
         for i in 0..buffer.len() {
             let mut byte = 0u8;
             for bit in 0..8 {
-                if bitmap.buffer[8*i + bit] > 0x7f {
+                if bitmap.buffer[8*i + bit] > 0x40 {
                     byte |= 1 << (7 - bit);
                 }
             }

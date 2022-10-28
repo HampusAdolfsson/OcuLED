@@ -1,6 +1,7 @@
 pub mod media;
 pub mod performance;
-pub mod matrix;
+pub mod stickfight;
+pub mod randomvideos;
 mod fonts;
 
 use chrono::Local;

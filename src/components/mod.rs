@@ -1,7 +1,9 @@
 mod text;
 mod layout;
+mod video;
 pub use text::*;
 pub use layout::*;
+pub use video::*;
 
 use crate::rendering;
 
