@@ -30,7 +30,7 @@ impl StickFightScreen {
 impl Drawable for StickFightScreen {
     fn draw(&mut self, canvas: &mut crate::rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
         let video_bounds = EmptyBounds::new().with_size(self.widget.size()).center_in(&bounds);
-        self.widget.draw(canvas, bounds, elapsed);
+        self.widget.draw(canvas, video_bounds, elapsed);
     }
 }
 

@@ -4,7 +4,6 @@ extern crate fontdue;
 extern crate lazy_static;
 
 mod output;
-mod screen_collection;
 mod screens;
 mod performance_monitor;
 mod overlays;
@@ -67,7 +66,7 @@ fn main() -> std::io::Result<()> {
     let mut media_overlay = overlays::MediaOverlay::new(Rc::clone(&media_provider));
     let mut screensaver = overlays::ScreensaverOverlay::new();
 
-    let mut screens = screen_collection::ScreenCollection::new(
+    let mut screens = screens::ScreenCollection::new(
         vec![
             &mut clock,
             &mut media,
