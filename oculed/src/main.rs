@@ -4,22 +4,20 @@ extern crate fontdue;
 extern crate lazy_static;
 
 mod output;
-mod rendering;
 mod screen_collection;
 mod screens;
 mod performance_monitor;
-mod components;
 mod overlays;
 mod fonts;
 mod media_provider;
 
 mod network_receiver;
 
-use std::ops::Bound;
 use std::rc::Rc;
 use std::sync::{mpsc, Mutex};
 
-use components::{Drawable, Bounds};
+use graphics::components::{self, Drawable, Bounds};
+use graphics::rendering;
 use output::RenderTarget;
 
 mod config {
@@ -59,7 +57,7 @@ fn main() -> std::io::Result<()> {
 
     let media_provider = Rc::new(Mutex::new(media_provider::PollingMediaProvider::new()));
 
-    let mut clock = screens::ClockScreen::new();
+    let mut clock = screens::clock::ClockScreen::new();
     let mut media = screens::media::MediaScreen::new(Rc::clone(&media_provider));
     let stats_monitor = performance_monitor::PerformanceMonitor::new();
     let mut perf_mem = screens::performance::PerformanceWithMemoryScreen::new(stats_monitor.statistics());

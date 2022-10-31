@@ -1,4 +1,3 @@
-use crate::components::{Drawable, Bounds};
 use crate::{rendering, components};
 use super::screens::Screen;
 
@@ -33,8 +32,8 @@ impl<'a> ScreenCollection<'a> {
     }
 }
 
-impl<'a> Drawable for ScreenCollection<'a> {
-    fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
+impl<'a> components::Drawable for ScreenCollection<'a> {
+    fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: components::Bounds, elapsed: &std::time::Duration) {
         let active_screen = &mut self.screens[self.active_screen];
         active_screen.draw(canvas, bounds, elapsed);
         if self.indicator.should_draw() {
@@ -53,8 +52,8 @@ struct ScreenIndicator {
     to_left: bool,
 }
 
-impl Drawable for ScreenIndicator {
-    fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
+impl components::Drawable for ScreenIndicator {
+    fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: components::Bounds, elapsed: &std::time::Duration) {
         self.elapsed += *elapsed;
 
         let size = self.num_screens;

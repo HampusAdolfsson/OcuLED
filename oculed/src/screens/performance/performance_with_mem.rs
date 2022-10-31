@@ -1,4 +1,5 @@
-use super::super::{Screen,fonts};
+use super::super::Screen;
+use crate::fonts;
 use super::{BarWidget,DoubleBarWidget};
 use crate::components::{Bounds, Drawable};
 use crate::components::EmptyBounds;

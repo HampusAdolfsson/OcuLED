@@ -1,4 +1,4 @@
-use image::{ImageDecoder, GenericImageView};
+use image::GenericImageView;
 
 /// A monochrome buffer we can draw to. Pixels are 1 byte each.
 #[derive(Clone)]

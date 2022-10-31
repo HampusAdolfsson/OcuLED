@@ -2,7 +2,8 @@ use crate::media_provider::MediaProvider;
 use crate::rendering;
 use crate::components::{ScrollingTextWidget, Alignment, BitmapWidget, TextWidget, Bounds, EmptyBounds, Widget, Drawable};
 
-use super::{fonts, Screen};
+use super::Screen;
+use crate::fonts;
 
 pub struct MediaScreen<M: MediaProvider> {
     provider: M,
@@ -15,7 +16,6 @@ pub struct MediaScreen<M: MediaProvider> {
 }
 
 const FONT_SIZE: f32 = 16.0;
-const FONT: &[u8] = include_bytes!("../../resources/fonts/Pixellari.ttf");
 const SCROLL_WAIT: std::time::Duration = std::time::Duration::from_secs(5); // time to wait between scrolling
 const SCROLL_WAIT_END: std::time::Duration = std::time::Duration::from_secs(2); // time to wait at scroll end
 

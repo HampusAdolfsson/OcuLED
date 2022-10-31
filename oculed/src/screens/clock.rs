@@ -1,15 +1,11 @@
-pub mod media;
-pub mod performance;
-pub mod stickfight;
-
 use chrono::Local;
-use crate::components::{Widget, TextWidget, EmptyBounds, Bounds, Drawable};
-use crate::{rendering, components, fonts};
 
-pub trait Screen : Drawable {
-    /// Called when this screen is switched to, and will be drawn soon
-    fn on_mount(&mut self);
-}
+use graphics::components::{self, Widget, TextWidget};
+use graphics::rendering;
+use crate::fonts;
+
+use super::Screen;
+
 
 pub struct ClockScreen<'a> {
     clock_widget: components::SimpleTextWidget<'a>,
@@ -35,12 +31,12 @@ impl ClockScreen<'static> {
     }
 }
 
-impl Drawable for ClockScreen<'static> {
-    fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
+impl components::Drawable for ClockScreen<'static> {
+    fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: components::Bounds, elapsed: &std::time::Duration) {
         self.update(elapsed);
 
         {
-            let clock_bounds = EmptyBounds::new()
+            let clock_bounds = components::EmptyBounds::new()
                 .with_size(self.clock_widget.size())
                 .center_in(&bounds);
             self.clock_widget.draw(canvas, clock_bounds, elapsed);

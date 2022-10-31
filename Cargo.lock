@@ -3,22 +3,6 @@
 version = 3
 
 [[package]]
-name = "OcuLED"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "fontdue",
- "hotkey",
- "image",
- "lazy_static",
- "rand",
- "regex",
- "simple-error",
- "windows",
- "wmi",
-]
-
-[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -340,6 +324,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphics"
+version = "0.1.0"
+dependencies = [
+ "fontdue",
+ "image",
+]
+
+[[package]]
 name = "half"
 version = "1.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -548,10 +540,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "oculed"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "fontdue",
+ "graphics",
+ "hotkey",
+ "image",
+ "lazy_static",
+ "rand",
+ "regex",
+ "simple-error",
+ "windows",
+ "wmi",
+]
+
+[[package]]
 name = "once_cell"
-version = "1.9.0"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da32515d9f6e6e489d7bc9d84c71b060db7247dc035bbe44eac88cf87486d8d5"
+checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
 name = "pin-project"
@@ -804,9 +813,9 @@ dependencies = [
 
 [[package]]
 name = "ttf-parser"
-version = "0.15.0"
+version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c74c96594835e10fa545e2a51e8709f30b173a092bfd6036ef2cec53376244f3"
+checksum = "7b3e06c9b9d80ed6b745c7159c40b311ad2916abb34a49e9be2653b90db0d8dd"
 
 [[package]]
 name = "unicode-xid"

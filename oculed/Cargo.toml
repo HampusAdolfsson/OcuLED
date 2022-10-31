@@ -1,0 +1,29 @@
+[package]
+name = "oculed"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+graphics = { path = "../graphics" }
+fontdue = "0.7.1"
+chrono = "0.4"
+image = "0.24"
+hotkey = "0.3"
+regex = "1"
+simple-error = "0.2.3"
+wmi = "0.9.2"
+lazy_static = "1.4.0"
+rand = "0.8.5"
+
+[dependencies.windows]
+version = "0.33"
+features = [
+    "Media_Control",
+    "Foundation",
+    "Foundation_Collections",
+    "Win32_System_Performance",
+    "Win32_Foundation",
+    "Win32_System_SystemInformation",
+]

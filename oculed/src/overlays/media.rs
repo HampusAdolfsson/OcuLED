@@ -1,6 +1,7 @@
-use crate::components::{ScrollingTextWidget, BitmapWidget, Bounds, EmptyBounds, Widget, Alignment, TextWidget, SimpleTextWidget, Drawable};
+use graphics::components::{self, TextWidget};
+use graphics::components::Widget;
+use graphics::rendering;
 use crate::media_provider::MediaProvider;
-use crate::rendering::{Bitmap, self};
 
 const PLAY_PAUSE_DURATION: std::time::Duration = std::time::Duration::from_millis(1000);
 const TRACK_INFO_DURATION: std::time::Duration = std::time::Duration::from_millis(3000);
@@ -28,8 +29,8 @@ impl<M: MediaProvider> MediaOverlay<M> {
     }
 }
 
-impl<M: MediaProvider> Drawable for MediaOverlay<M> {
-    fn draw(&mut self, canvas: &mut crate::rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
+impl<M: MediaProvider> components::Drawable for MediaOverlay<M> {
+    fn draw(&mut self, canvas: &mut crate::rendering::Bitmap, bounds: components::Bounds, elapsed: &std::time::Duration) {
         if !self.media_provider.track_name_is(&None) && !self.media_provider.artist_is(&None) {
             if !self.media_provider.track_name_is(&self.last_track_name) || !self.media_provider.artist_is(&self.last_artist) {
                 self.track_info.show(self.media_provider.track_name().as_ref().unwrap(), self.media_provider.artist().as_ref().unwrap());
@@ -55,9 +56,9 @@ impl<M: MediaProvider> Drawable for MediaOverlay<M> {
 }
 
 struct TrackInfoOverlay {
-    title: SimpleTextWidget<'static>,
-    artist: SimpleTextWidget<'static>,
-    icon: BitmapWidget,
+    title: components::SimpleTextWidget<'static>,
+    artist: components::SimpleTextWidget<'static>,
+    icon: components::BitmapWidget,
     duration: std::time::Duration,
     time: std::time::Duration,
 }
@@ -65,9 +66,9 @@ struct TrackInfoOverlay {
 impl TrackInfoOverlay {
     pub fn new(duration: std::time::Duration) -> Self {
         Self {
-            title: SimpleTextWidget::new("".to_string(), &crate::fonts::PIXELLARI, 16.0),
-            artist: SimpleTextWidget::new("".to_string(), &crate::fonts::PIXELOID, 9.0),
-            icon: BitmapWidget::new(rendering::Bitmap::from_png(include_bytes!["../../resources/images/musical_note.png"])),
+            title: components::SimpleTextWidget::new("".to_string(), &crate::fonts::PIXELLARI, 16.0),
+            artist: components::SimpleTextWidget::new("".to_string(), &crate::fonts::PIXELOID, 9.0),
+            icon: components::BitmapWidget::new(rendering::Bitmap::from_png(include_bytes!["../../resources/images/musical_note.png"])),
             duration,
             time: std::time::Duration::ZERO,
         }
@@ -80,27 +81,27 @@ impl TrackInfoOverlay {
     }
 }
 
-impl Drawable for TrackInfoOverlay {
-    fn draw(&mut self, canvas: &mut crate::rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
+impl components::Drawable for TrackInfoOverlay {
+    fn draw(&mut self, canvas: &mut crate::rendering::Bitmap, bounds: components::Bounds, elapsed: &std::time::Duration) {
         self.time = self.time.saturating_sub(*elapsed);
         if self.time.is_zero() {
             return;
         }
         canvas.clear();
 
-        let icon_bounds = EmptyBounds::new().with_size(self.icon.size()).center_ver_in(&bounds).with_x(0);
+        let icon_bounds = components::EmptyBounds::new().with_size(self.icon.size()).center_ver_in(&bounds).with_x(0);
         self.icon.draw(canvas, icon_bounds, elapsed);
 
-        let title_bounds = EmptyBounds::new()
+        let title_bounds = components::EmptyBounds::new()
             .with_width(bounds.size.width).with_height(self.title.size().height)
             .right_of(&icon_bounds).move_x(8)
             .with_y(0);
-        let artist_bounds = EmptyBounds::new()
+        let artist_bounds = components::EmptyBounds::new()
             .with_width(bounds.size.width).with_height(self.title.size().height)
             .right_of(&icon_bounds).below(&title_bounds)
             .move_x(8).move_y(6);
 
-        let text_bounds = EmptyBounds::new().between_ver(title_bounds.pos.y, artist_bounds.bottom()).center_ver_in(&bounds);
+        let text_bounds = components::EmptyBounds::new().between_ver(title_bounds.pos.y, artist_bounds.bottom()).center_ver_in(&bounds);
 
         self.title.draw(canvas, title_bounds.move_y(text_bounds.pos.y), elapsed);
         self.artist.draw(canvas, artist_bounds.move_y(text_bounds.pos.y), elapsed);
@@ -111,8 +112,8 @@ struct PlayPauseOverlay {
     duration: std::time::Duration,
     time: std::time::Duration,
     is_paused: bool,
-    paused_widget: BitmapWidget,
-    playing_widget: BitmapWidget,
+    paused_widget: components::BitmapWidget,
+    playing_widget: components::BitmapWidget,
 }
 
 impl PlayPauseOverlay {
@@ -121,8 +122,8 @@ impl PlayPauseOverlay {
             duration,
             time: std::time::Duration::ZERO,
             is_paused: false,
-            paused_widget: BitmapWidget::new(Bitmap::from_png_with_scale(include_bytes!("../../resources/images/pause.png"), 2.0)),
-            playing_widget: BitmapWidget::new(Bitmap::from_png(include_bytes!("../../resources/images/play.png"))),
+            paused_widget: components::BitmapWidget::new(rendering::Bitmap::from_png_with_scale(include_bytes!("../../resources/images/pause.png"), 2.0)),
+            playing_widget: components::BitmapWidget::new(rendering::Bitmap::from_png(include_bytes!("../../resources/images/play.png"))),
         }
     }
 
@@ -132,8 +133,8 @@ impl PlayPauseOverlay {
     }
 }
 
-impl Drawable for PlayPauseOverlay {
-    fn draw(&mut self, canvas: &mut crate::rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
+impl components::Drawable for PlayPauseOverlay {
+    fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: components::Bounds, elapsed: &std::time::Duration) {
         self.time = self.time.saturating_sub(*elapsed);
         if self.time.is_zero() {
             return;
@@ -141,7 +142,7 @@ impl Drawable for PlayPauseOverlay {
 
         canvas.clear();
         let widget = if self.is_paused { &mut self.paused_widget } else { &mut self.playing_widget };
-        let widget_bounds = EmptyBounds::new().with_size(widget.size()).center_in(&bounds);
+        let widget_bounds = components::EmptyBounds::new().with_size(widget.size()).center_in(&bounds);
         widget.draw(canvas, widget_bounds, elapsed);
     }
 }
