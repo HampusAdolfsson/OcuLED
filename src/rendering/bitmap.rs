@@ -1,8 +1,6 @@
-use image::ImageDecoder;
+use image::{ImageDecoder, GenericImageView};
 
-/**
- * A monochrome buffer we can draw to. Pixels are 1 byte each.
- */
+/// A monochrome buffer we can draw to. Pixels are 1 byte each.
 #[derive(Clone)]
 pub struct Bitmap {
     pub width: usize,
@@ -27,18 +25,22 @@ impl Bitmap {
         }
     }
 
-    /** Decodes bytes in monochrome png format (e.g. read from a png file) into a bitmap */
+    /// Decodes bytes in png format (e.g. read from a png file) into a bitmap
     pub fn from_png(bytes: &[u8]) -> Self {
-        let cursor = std::io::Cursor::new(bytes);
-        let decoder = image::codecs::png::PngDecoder::new(cursor).unwrap();
-
-        if decoder.color_type() != image::ColorType::L8 {
-            panic!("Attempted to load non-grayscale image (color type was {:?}).", decoder.color_type());
-        }
-
-        let mut buf = vec![0u8; decoder.total_bytes() as usize];
-        let dimensions = decoder.dimensions();
-        decoder.read_image(&mut buf[..]).unwrap();
+        Self::from_png_with_scale(bytes, 1.0)
+    }
+    /// Decodes bytes in png format (e.g. read from a png file) into a bitmap
+    pub fn from_png_with_scale(bytes: &[u8], scale: f32) -> Self {
+        let scaled_img = {
+            let cursor = std::io::Cursor::new(bytes);
+            let img = image::io::Reader::new(cursor).with_guessed_format().unwrap().decode().unwrap();
+            let gray = image::imageops::grayscale(&img);
+            let dimensions = img.dimensions();
+            let (w, h) = (dimensions.0 as f32 * scale, dimensions.1 as f32 * scale);
+            image::imageops::resize(&gray, w as u32, h as u32, image::imageops::FilterType::Nearest)
+        };
+        let dimensions = scaled_img.dimensions();
+        let buf = scaled_img.into_vec();
 
         Bitmap {
             width: dimensions.0 as usize,
@@ -48,7 +50,7 @@ impl Bitmap {
     }
 
     pub fn from_text(text: &str, font_size: f32, font: &fontdue::Font) -> Self {
-        let text_metrics = super::measure_text(text, font, font_size);
+        let text_metrics = measure_text(text, font, font_size);
         let baseline = text_metrics.base_height as i32;
         let mut next_x = 0.0;
 
@@ -111,4 +113,38 @@ impl Bitmap {
             }
         }
     }
+}
+
+/// Describes the size of a string of text for some font and font size
+struct TextMetrics {
+    pub width: usize,
+    pub height: usize,
+    /* The distance from the top of the text to the baseline */
+    pub base_height: usize,
+}
+
+/// Measures the size of some text without rendering it. The metrics return
+/// describe the size the text would have if rendered.
+fn measure_text(text: &str, font: &fontdue::Font, font_size: f32) -> TextMetrics {
+    let mut x = 0f32;
+    let mut base_height = 0i32;
+    let mut bottom = 0i32;
+
+    for character in text.chars() {
+        let metrics = font.metrics(character, font_size);
+        let top = -(metrics.height as i32) - metrics.ymin;
+        if top < base_height {
+            base_height = top;
+        }
+        if -metrics.ymin > bottom {
+            bottom = -metrics.ymin;
+        }
+
+        x += metrics.advance_width;
+    }
+    return TextMetrics {
+        width: x as usize,
+        height: (bottom - base_height) as usize,
+        base_height: (-base_height) as usize,
+    };
 }

@@ -4,7 +4,7 @@ mod performance_with_temp;
 pub use performance_with_mem::PerformanceWithMemoryScreen;
 pub use performance_with_temp::PerformanceWithTemperatureScreen;
 
-use crate::components::{Widget, Bounds, Size};
+use crate::components::{Widget, Bounds, Size, Drawable};
 use crate::rendering;
 
 const SMOOTHING_FACTOR: f32 = 0.2;
@@ -33,13 +33,14 @@ impl BarWidget {
     }
 }
 
-impl Widget<(), ()> for BarWidget {
+impl Drawable for BarWidget {
     fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
         self.value = update_smooth_value(self.value, self.target, elapsed);
         draw_bar_limits(canvas, bounds);
         canvas.draw_rect_with_slits(bounds.pos.x + 1, bounds.pos.y + 2, ((bounds.size.width as f32 - 2.0) * self.value) as usize, bounds.size.height as usize - 4, 4);
     }
-
+}
+impl Widget<(), ()> for BarWidget {
     fn size(&self) -> Size<(), ()> {
         Size { width: (), height: () }
     }
@@ -74,7 +75,7 @@ impl DoubleBarWidget {
     }
 }
 
-impl Widget<(), ()> for DoubleBarWidget {
+impl Drawable for DoubleBarWidget {
     fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
         self.value_1 = update_smooth_value(self.value_1, self.target_1, elapsed);
         self.value_2 = update_smooth_value(self.value_2, self.target_2, elapsed);
@@ -82,7 +83,8 @@ impl Widget<(), ()> for DoubleBarWidget {
         canvas.draw_rect_with_slits(bounds.pos.x + 1, bounds.pos.y + 2, ((bounds.size.width as f32 - 2.0) * self.value_1) as usize, (bounds.size.height as usize - 4) / 2, 4);
         canvas.draw_rect(bounds.pos.x + 1, bounds.pos.y + 2 + (bounds.size.height as i32 - 4) / 2, ((bounds.size.width as f32 - 2.0) * self.value_2) as usize, (bounds.size.height as usize - 4) / 2);
     }
-
+}
+impl Widget<(), ()> for DoubleBarWidget {
     fn size(&self) -> Size<(), ()> {
         Size { width: (), height: () }
     }

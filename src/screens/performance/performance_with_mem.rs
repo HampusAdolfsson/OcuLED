@@ -1,9 +1,8 @@
 use super::super::{Screen,fonts};
 use super::{BarWidget,DoubleBarWidget};
-use crate::components::Bounds;
+use crate::components::{Bounds, Drawable};
 use crate::components::EmptyBounds;
 use crate::components::SimpleTextWidget;
-use crate::components::Size;
 use crate::components::Widget;
 use crate::rendering;
 use crate::performance_monitor;
@@ -35,15 +34,8 @@ impl PerformanceWithMemoryScreen {
     }
 }
 
-impl Screen for PerformanceWithMemoryScreen {
-    fn on_mount(&mut self) {
-        // Gives a cool effect with the smoothing
-        self.cpu_widgets.1.set_value(0.0);
-        self.mem_widgets.1.set_value(0.0);
-        self.gpu_widgets.1.set_values(0.0, 0.0);
-    }
-
-    fn draw_to(&mut self, canvas: &mut rendering::Bitmap, elapsed: &std::time::Duration) {
+impl Drawable for PerformanceWithMemoryScreen {
+    fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
         {
             let stats = self.stats.lock().unwrap();
             self.cpu_widgets.1.set_value_smoothed(stats.cpu_usage);
@@ -52,8 +44,8 @@ impl Screen for PerformanceWithMemoryScreen {
         };
 
 
-        let canvas_bounds = Bounds::cover_bitmap(canvas)
-            .move_y(VERTICAL_PADDING as i32).with_height(canvas.height as u32 - 2 * VERTICAL_PADDING);
+        let canvas_bounds = bounds
+            .move_y(VERTICAL_PADDING as i32).with_height(bounds.size.height as u32 - 2 * VERTICAL_PADDING);
         let text_width = TEXT_PADDING + self.cpu_widgets.0.size().width.max(self.mem_widgets.0.size().width.max(self.gpu_widgets.0.size().width));
         let text_bounds = EmptyBounds::new().with_width(text_width).with_x(0);
         let bar_bounds = EmptyBounds::new()
@@ -81,5 +73,14 @@ impl Screen for PerformanceWithMemoryScreen {
         // canvas.draw_text(0, (canvas.bitmap.height - BAR_HEIGHT / 2) as i32, "GPU", FONT_SIZE, rendering::HorizontalAlignment::Left, rendering::VerticalAlignment::CenterBase);
         // self.draw_bar_double(canvas, TEXT_WIDTH, (canvas.height - BAR_HEIGHT) as i32, BAR_HEIGHT, bar_width, self.gpu, self.vram);
 
+    }
+}
+
+impl Screen for PerformanceWithMemoryScreen {
+    fn on_mount(&mut self) {
+        // Gives a cool effect with the smoothing
+        self.cpu_widgets.1.set_value(0.0);
+        self.mem_widgets.1.set_value(0.0);
+        self.gpu_widgets.1.set_values(0.0, 0.0);
     }
 }

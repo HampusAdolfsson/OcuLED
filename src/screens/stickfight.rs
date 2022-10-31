@@ -1,6 +1,6 @@
-use image::{ImageResult, RgbImage, AnimationDecoder, RgbaImage};
+use image::{ImageResult, AnimationDecoder, RgbaImage};
 
-use crate::components::{VideoWidget, Widget, Bounds, EmptyBounds};
+use crate::components::{VideoWidget, Widget, Bounds, EmptyBounds, Drawable};
 use crate::rendering::Video;
 
 use super::Screen;
@@ -27,14 +27,15 @@ impl StickFightScreen {
     }
 }
 
+impl Drawable for StickFightScreen {
+    fn draw(&mut self, canvas: &mut crate::rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
+        let video_bounds = EmptyBounds::new().with_size(self.widget.size()).center_in(&bounds);
+        self.widget.draw(canvas, bounds, elapsed);
+    }
+}
+
 impl Screen for StickFightScreen {
     fn on_mount(&mut self) {
         self.widget.reset();
-    }
-
-    fn draw_to(&mut self, canvas: &mut crate::rendering::Bitmap, elapsed: &std::time::Duration) {
-        let canvas_bounds = Bounds::cover_bitmap(&canvas);
-        let bounds = EmptyBounds::new().with_size(self.widget.size()).center_in(&canvas_bounds);
-        self.widget.draw(canvas, bounds, elapsed);
     }
 }

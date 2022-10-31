@@ -9,7 +9,7 @@ use super::Widget;
 pub trait TextWidget<W: Copy, H: Copy> : Widget<W, H> {
     /// Set the text to be displayed.
     ///
-    /// The text will be drawn on the next [draw] call.
+    /// The text will be drawn on the next [super::Widget::draw] call.
     /// Returns `true` if the new text was different from the previous one.
-    fn set_text(&mut self, text: String) -> bool;
+    fn set_text(&mut self, text: &str) -> bool;
 }

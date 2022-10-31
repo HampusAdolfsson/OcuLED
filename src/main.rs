@@ -5,15 +5,22 @@ extern crate lazy_static;
 
 mod output;
 mod rendering;
-mod display_controller;
+mod screen_collection;
 mod screens;
 mod performance_monitor;
 mod components;
+mod overlays;
+mod fonts;
+mod media_provider;
 
 mod network_receiver;
 
-use std::sync::mpsc;
+use std::ops::Bound;
+use std::rc::Rc;
+use std::sync::{mpsc, Mutex};
 
+use components::{Drawable, Bounds};
+use output::RenderTarget;
 
 mod config {
     pub const ADDRESS: &str = "192.168.1.6:4435";
@@ -50,17 +57,18 @@ fn main() -> std::io::Result<()> {
 
     network_receiver::start(tx2);
 
-    let mut clock = screens::ClockScreen::new();
-    let mut media = screens::media::MediaControls::new();
+    let media_provider = Rc::new(Mutex::new(media_provider::PollingMediaProvider::new()));
 
+    let mut clock = screens::ClockScreen::new();
+    let mut media = screens::media::MediaScreen::new(Rc::clone(&media_provider));
     let stats_monitor = performance_monitor::PerformanceMonitor::new();
     let mut perf_mem = screens::performance::PerformanceWithMemoryScreen::new(stats_monitor.statistics());
     let mut perf_temp = screens::performance::PerformanceWithTemperatureScreen::new(stats_monitor.statistics());
     let mut stickfight = screens::stickfight::StickFightScreen::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT).unwrap();
-    let screensaver = screens::randomvideos::RandomVideosScreen::new();
 
-    let mut display_controller = display_controller::DisplayController::new(
-        config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT,
+    let mut media_overlay = overlays::MediaOverlay::new(Rc::clone(&media_provider));
+
+    let mut screens = screen_collection::ScreenCollection::new(
         vec![
             &mut clock,
             &mut media,
@@ -68,22 +76,29 @@ fn main() -> std::io::Result<()> {
             &mut perf_temp,
             &mut stickfight
         ],
-        screensaver,
     );
     let mut output = output::UdpOutput{ address: config::ADDRESS, previous: rendering::BinaryBitmap{ width: 0, height: 0, buffer: Vec::new() } };
 
     let mut last_time = std::time::Instant::now();
+    let mut canvas = rendering::Bitmap::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT);
+    let canvas_bounds = Bounds::cover_bitmap(&canvas);
     loop {
         let elapsed = last_time.elapsed();
         last_time = std::time::Instant::now();
-        display_controller.draw_to(&mut output, &elapsed)?;
+        {
+            media_provider.lock().unwrap().update_media_info();
+        }
+        canvas.clear();
+        screens.draw(&mut canvas, canvas_bounds, &elapsed);
+        media_overlay.draw(&mut canvas, canvas_bounds, &elapsed);
+        output.render_bitmap((&canvas).into())?;
 
         let event = rx.recv_timeout(std::time::Duration::from_millis(50));
         match event {
-            Ok(UserInput::NextScreen) => display_controller.next_screen(),
-            Ok(UserInput::PrevScreen) => display_controller.previous_screen(),
-            Ok(UserInput::ScreensaverOn) => display_controller.set_screensaver_active(true),
-            Ok(UserInput::ScreensaverOff) => display_controller.set_screensaver_active(false),
+            Ok(UserInput::NextScreen) => screens.next_screen(),
+            Ok(UserInput::PrevScreen) => screens.previous_screen(),
+            Ok(UserInput::ScreensaverOn) => {},
+            Ok(UserInput::ScreensaverOff) => {},
             Ok(UserInput::Quit) => break Ok(()),
             Err(_) => {},
         }

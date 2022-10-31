@@ -1,4 +1,4 @@
-use image::{AnimationDecoder, EncodableLayout, ImageResult, RgbImage, RgbaImage};
+use image::{AnimationDecoder, EncodableLayout, ImageResult, RgbaImage};
 
 use super::Bitmap;
 

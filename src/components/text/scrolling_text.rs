@@ -1,3 +1,4 @@
+use crate::components::Drawable;
 use crate::rendering;
 use super::TextWidget;
 use super::simple_text::SimpleTextWidget;
@@ -85,7 +86,7 @@ enum ScrollingState {
 }
 
 impl<'a> TextWidget<(), u32> for ScrollingTextWidget<'a> {
-    fn set_text(&mut self, text: String) -> bool {
+    fn set_text(&mut self, text: &str) -> bool {
         if self.text.set_text(text) {
             self.state = ScrollingState::WaitingStart(self.wait_start);
             return true;
@@ -94,7 +95,7 @@ impl<'a> TextWidget<(), u32> for ScrollingTextWidget<'a> {
     }
 }
 
-impl<'a> Widget<(), u32> for ScrollingTextWidget<'a> {
+impl<'a> Drawable for ScrollingTextWidget<'a> {
     fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
         self.update(elapsed, bounds.size.width);
 
@@ -120,7 +121,9 @@ impl<'a> Widget<(), u32> for ScrollingTextWidget<'a> {
         };
         self.text.draw(canvas, bounds.with_x(x), elapsed);
     }
+}
 
+impl<'a> Widget<(), u32> for ScrollingTextWidget<'a> {
     fn size(&self) -> Size<(), u32> {
         Size {
             width: (),

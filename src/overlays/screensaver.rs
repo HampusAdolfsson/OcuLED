@@ -1,18 +1,14 @@
-use image::ImageResult;
 use rand::prelude::Distribution;
 
-use crate::components::{VideoWidget, Widget, EmptyBounds, Bounds};
+use crate::components::{VideoWidget, EmptyBounds, Bounds, Widget, Drawable};
 use crate::rendering::Video;
 
-use super::Screen;
-
-
-pub struct RandomVideosScreen {
+pub struct ScreensaverOverlay {
     videos: Vec<VideoWidget>,
-    current_video: usize,
+    current_video: Option<usize>,
 }
 
-impl RandomVideosScreen {
+impl ScreensaverOverlay {
     pub fn new() -> Self {
         let raw_bytes: Vec<(&[u8], bool)> = vec![
             (include_bytes!("../../resources/gifs/fishy.gif"), false),
@@ -26,22 +22,26 @@ impl RandomVideosScreen {
         let widgets = videos.map(|vid| VideoWidget::new(vid, 20.0));
         Self {
             videos: widgets.collect(),
-            current_video: 0,
+            current_video: None,
         }
+    }
+
+    pub fn show(&mut self) {
+        let distribution = rand::distributions::Uniform::from(0..self.videos.len());
+        self.current_video = Some(distribution.sample(&mut rand::thread_rng()));
+    }
+    pub fn hide(&mut self) {
+        self.current_video = None;
     }
 }
 
-impl Screen for RandomVideosScreen {
-    fn on_mount(&mut self) {
-        let distribution = rand::distributions::Uniform::from(0..self.videos.len());
-        self.current_video = distribution.sample(&mut rand::thread_rng());
-    }
-
-    fn draw_to(&mut self, canvas: &mut crate::rendering::Bitmap, elapsed: &std::time::Duration) {
-        let active_video = self.videos.get_mut(self.current_video).unwrap();
-
-        let canvas_bounds = Bounds::cover_bitmap(&canvas);
-        let bounds = EmptyBounds::new().with_size(active_video.size()).center_in(&canvas_bounds);
-        active_video.draw(canvas, bounds, elapsed);
+impl Drawable for ScreensaverOverlay {
+    fn draw(&mut self, canvas: &mut crate::rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
+        if let Some(current_video) = self.current_video {
+            canvas.clear();
+            let active_video = self.videos.get_mut(current_video).unwrap();
+            let video_bounds = EmptyBounds::new().with_size(active_video.size()).center_in(&bounds);
+            active_video.draw(canvas, bounds, elapsed);
+        }
     }
 }

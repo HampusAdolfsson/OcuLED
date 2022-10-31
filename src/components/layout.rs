@@ -81,10 +81,10 @@ impl<X: Copy, Y: Copy, H: Copy> Rect<X, Y, u32, H> {
         }
     }
     /// Aligns the left edge of `self` with the right edge of `other`.
-    pub fn right_of<Y2: Copy, W2: Copy, H2: Copy>(&self, other: &Rect<i32, Y2, W2, H2>) -> Rect<i32, Y, u32, H> {
+    pub fn right_of<Y2: Copy, H2: Copy>(&self, other: &Rect<i32, Y2, u32, H2>) -> Rect<i32, Y, u32, H> {
         Rect {
             pos: Point {
-                x: other.pos.x - self.size.width as i32,
+                x: other.pos.x + other.size.width as i32,
                 y: self.pos.y,
             },
             size: self.size,

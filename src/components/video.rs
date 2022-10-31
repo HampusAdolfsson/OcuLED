@@ -1,6 +1,6 @@
 use crate::rendering::Video;
 
-use super::{Widget, Size, Bounds};
+use super::{Widget, Size, Bounds, Drawable};
 
 
 pub struct VideoWidget {
@@ -23,7 +23,7 @@ impl VideoWidget {
     }
 }
 
-impl Widget<u32, u32> for VideoWidget {
+impl Drawable for VideoWidget {
     fn draw(&mut self, canvas: &mut crate::rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
         self.time += *elapsed;
         while self.time > self.time_per_frame {
@@ -33,7 +33,9 @@ impl Widget<u32, u32> for VideoWidget {
         let frame = self.video.current_frame();
         canvas.draw_bitmap(bounds.pos.x, bounds.pos.y, frame);
     }
+}
 
+impl Widget<u32, u32> for VideoWidget {
     fn size(&self) -> Size<u32, u32> {
         let frame = self.video.current_frame();
         Size {
