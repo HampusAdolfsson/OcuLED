@@ -67,6 +67,7 @@ fn main() -> std::io::Result<()> {
     let mut stickfight = screens::stickfight::StickFightScreen::new(config::DISPLAY_WIDTH, config::DISPLAY_HEIGHT).unwrap();
 
     let mut media_overlay = overlays::MediaOverlay::new(Rc::clone(&media_provider));
+    let mut screensaver = overlays::ScreensaverOverlay::new();
 
     let mut screens = screen_collection::ScreenCollection::new(
         vec![
@@ -89,16 +90,18 @@ fn main() -> std::io::Result<()> {
             media_provider.lock().unwrap().update_media_info();
         }
         canvas.clear();
-        screens.draw(&mut canvas, canvas_bounds, &elapsed);
-        media_overlay.draw(&mut canvas, canvas_bounds, &elapsed);
+        let drawables: [&mut dyn Drawable; 3] = [&mut screens, &mut screensaver, &mut media_overlay];
+        for drawable in drawables {
+            drawable.draw(&mut canvas, canvas_bounds, &elapsed);
+        }
         output.render_bitmap((&canvas).into())?;
 
         let event = rx.recv_timeout(std::time::Duration::from_millis(50));
         match event {
             Ok(UserInput::NextScreen) => screens.next_screen(),
             Ok(UserInput::PrevScreen) => screens.previous_screen(),
-            Ok(UserInput::ScreensaverOn) => {},
-            Ok(UserInput::ScreensaverOff) => {},
+            Ok(UserInput::ScreensaverOn) => screensaver.show(),
+            Ok(UserInput::ScreensaverOff) => screensaver.hide(),
             Ok(UserInput::Quit) => break Ok(()),
             Err(_) => {},
         }

@@ -41,7 +41,7 @@ impl Drawable for ScreensaverOverlay {
             canvas.clear();
             let active_video = self.videos.get_mut(current_video).unwrap();
             let video_bounds = EmptyBounds::new().with_size(active_video.size()).center_in(&bounds);
-            active_video.draw(canvas, bounds, elapsed);
+            active_video.draw(canvas, video_bounds, elapsed);
         }
     }
 }
