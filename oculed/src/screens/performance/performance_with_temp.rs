@@ -1,4 +1,3 @@
-use super::BarWidget;
 use super::DoubleBarWidget;
 use super::super::Screen;
 use crate::components::BitmapWidget;
@@ -18,7 +17,7 @@ use std::sync::{Arc, Mutex};
  */
 pub struct PerformanceWithTemperatureScreen {
     stats: Arc<Mutex<performance_monitor::PerformanceStatistics>>,
-    cpu_widgets: (BitmapWidget, SimpleTextWidget<'static>, BarWidget),
+    cpu_widgets: (BitmapWidget, SimpleTextWidget<'static>, DoubleBarWidget),
     gpu_widgets: (BitmapWidget, SimpleTextWidget<'static>, DoubleBarWidget),
 }
 
@@ -34,7 +33,7 @@ impl PerformanceWithTemperatureScreen {
             cpu_widgets: (
                 BitmapWidget::new(rendering::Bitmap::from_png(include_bytes!("../../../resources/images/cpu.png"))),
                 SimpleTextWidget::new("".to_string(), &fonts::PIXELOID, FONT_SIZE),
-                BarWidget::new(),
+                DoubleBarWidget::new(),
             ),
             gpu_widgets: (
                 BitmapWidget::new(rendering::Bitmap::from_png(include_bytes!("../../../resources/images/gpu.png"))),
@@ -49,7 +48,7 @@ impl Drawable for PerformanceWithTemperatureScreen {
     fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
         {
             let stats = self.stats.lock().unwrap();
-            self.cpu_widgets.2.set_value_smoothed(stats.cpu_usage);
+            self.cpu_widgets.2.set_values_smoothed(stats.cpu_usage_group_1, stats.cpu_usage_group_2);
             self.cpu_widgets.1.set_text(&format!("{} C", stats.cpu_temperature));
             self.gpu_widgets.2.set_values_smoothed(stats.gpu_usage, stats.vram_usage);
             self.gpu_widgets.1.set_text(&format!("{} C", stats.gpu_temperature));
@@ -100,7 +99,7 @@ impl Drawable for PerformanceWithTemperatureScreen {
 impl Screen for PerformanceWithTemperatureScreen {
     fn on_mount(&mut self) {
         // Gives a cool effect with the smoothing
-        self.cpu_widgets.2.set_value(0.0);
+        self.cpu_widgets.2.set_values(0.0, 0.0);
         self.gpu_widgets.2.set_values(0.0, 0.0);
     }
 }

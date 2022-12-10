@@ -14,7 +14,7 @@ use std::sync::{Arc, Mutex};
  */
 pub struct PerformanceWithMemoryScreen {
     stats: Arc<Mutex<performance_monitor::PerformanceStatistics>>,
-    cpu_widgets: (SimpleTextWidget<'static>, BarWidget),
+    cpu_widgets: (SimpleTextWidget<'static>, DoubleBarWidget),
     mem_widgets: (SimpleTextWidget<'static>, BarWidget),
     gpu_widgets: (SimpleTextWidget<'static>, DoubleBarWidget),
 }
@@ -28,7 +28,7 @@ impl PerformanceWithMemoryScreen {
     pub fn new(stats: Arc<Mutex<performance_monitor::PerformanceStatistics>>) -> Self {
         PerformanceWithMemoryScreen {
             stats: stats,
-            cpu_widgets: (SimpleTextWidget::new("CPU".to_string(), &fonts::PIXELOID, FONT_SIZE), BarWidget::new()),
+            cpu_widgets: (SimpleTextWidget::new("CPU".to_string(), &fonts::PIXELOID, FONT_SIZE), DoubleBarWidget::new()),
             mem_widgets: (SimpleTextWidget::new("MEM".to_string(), &fonts::PIXELOID, FONT_SIZE), BarWidget::new()),
             gpu_widgets: (SimpleTextWidget::new("GPU".to_string(), &fonts::PIXELOID, FONT_SIZE), DoubleBarWidget::new()),
         }
@@ -39,7 +39,7 @@ impl Drawable for PerformanceWithMemoryScreen {
     fn draw(&mut self, canvas: &mut rendering::Bitmap, bounds: Bounds, elapsed: &std::time::Duration) {
         {
             let stats = self.stats.lock().unwrap();
-            self.cpu_widgets.1.set_value_smoothed(stats.cpu_usage);
+            self.cpu_widgets.1.set_values_smoothed(stats.cpu_usage_group_1, stats.cpu_usage_group_2);
             self.mem_widgets.1.set_value_smoothed(stats.memory_usage);
             self.gpu_widgets.1.set_values_smoothed(stats.gpu_usage, stats.vram_usage);
         };
@@ -80,7 +80,7 @@ impl Drawable for PerformanceWithMemoryScreen {
 impl Screen for PerformanceWithMemoryScreen {
     fn on_mount(&mut self) {
         // Gives a cool effect with the smoothing
-        self.cpu_widgets.1.set_value(0.0);
+        self.cpu_widgets.1.set_values(0.0, 0.0);
         self.mem_widgets.1.set_value(0.0);
         self.gpu_widgets.1.set_values(0.0, 0.0);
     }
