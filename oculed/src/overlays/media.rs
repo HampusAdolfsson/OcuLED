@@ -18,13 +18,16 @@ pub struct MediaOverlay<M: MediaProvider> {
 
 impl<M: MediaProvider> MediaOverlay<M> {
     pub fn new(provider: M) -> Self {
+        let last_track_name = provider.track_name();
+        let last_artist = provider.artist();
+        let last_paused = provider.paused();
         Self {
             media_provider: provider,
             play_pause: PlayPauseOverlay::new(PLAY_PAUSE_DURATION),
             track_info: TrackInfoOverlay::new(TRACK_INFO_DURATION),
-            last_track_name: None,
-            last_artist: None,
-            last_paused: None,
+            last_track_name,
+            last_artist,
+            last_paused,
         }
     }
 }

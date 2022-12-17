@@ -1,4 +1,4 @@
-// #![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 extern crate fontdue;
 #[macro_use]
 extern crate lazy_static;
@@ -55,6 +55,7 @@ fn main() -> std::io::Result<()> {
     network_receiver::start(tx2);
 
     let media_provider = Rc::new(Mutex::new(media_provider::PollingMediaProvider::new()));
+    media_provider.lock().unwrap().update_media_info();
 
     let mut clock = screens::clock::ClockScreen::new();
     let mut media = screens::media::MediaScreen::new(Rc::clone(&media_provider));
@@ -83,15 +84,16 @@ fn main() -> std::io::Result<()> {
     loop {
         let elapsed = last_time.elapsed();
         last_time = std::time::Instant::now();
-        {
-            media_provider.lock().unwrap().update_media_info();
-        }
+
+        media_provider.lock().unwrap().update_media_info();
         canvas.clear();
         let drawables: [&mut dyn Drawable; 3] = [&mut screens, &mut screensaver, &mut media_overlay];
         for drawable in drawables {
             drawable.draw(&mut canvas, canvas_bounds, &elapsed);
         }
-        output.render_bitmap((&canvas).into())?;
+        if let Err(e) = output.render_bitmap((&canvas).into()) {
+            println!("Failed to send bitmap: {:?}", e);
+        }
 
         let event = rx.recv_timeout(std::time::Duration::from_millis(50));
         match event {

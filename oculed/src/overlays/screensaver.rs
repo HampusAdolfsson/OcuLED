@@ -17,6 +17,7 @@ impl ScreensaverOverlay {
             (include_bytes!("../../resources/gifs/kitty.gif"), true),
             (include_bytes!("../../resources/gifs/legday.gif"), false),
             (include_bytes!("../../resources/gifs/planets.gif"), false),
+            (include_bytes!("../../resources/gifs/cyclist.gif"), true),
         ];
         let videos = raw_bytes.into_iter().map(|(bytes, invert)| Video::from_gif(bytes, invert).unwrap());
         let widgets = videos.map(|vid| VideoWidget::new(vid, 20.0));
@@ -27,8 +28,10 @@ impl ScreensaverOverlay {
     }
 
     pub fn show(&mut self) {
-        let distribution = rand::distributions::Uniform::from(0..self.videos.len());
-        self.current_video = Some(distribution.sample(&mut rand::thread_rng()));
+        if self.current_video.is_none() {
+            let distribution = rand::distributions::Uniform::from(0..self.videos.len());
+            self.current_video = Some(distribution.sample(&mut rand::thread_rng()));
+        }
     }
     pub fn hide(&mut self) {
         self.current_video = None;
